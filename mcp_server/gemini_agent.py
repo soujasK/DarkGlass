@@ -22,6 +22,7 @@ from app.core.config import get_settings
 
 Emit = Callable[[str, dict[str, Any]], Awaitable[None]]
 MAX_TURNS = 12
+TURN_TIMEOUT_S = 120.0  # one model turn; a hung call fails loudly instead of leaving the UI spinning
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -93,14 +94,20 @@ async def run_gemini(cable_id: str, emit: Emit, system_prompt: str) -> dict[str,
                 system_instruction=system_prompt,
                 tools=[tool],
                 automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
+                # The procedure is short and explicit; deep thinking only adds latency on every turn.
+                thinking_config=types.ThinkingConfig(thinking_level="low"),
             )
             contents: list[Any] = [types.Content(role="user", parts=[types.Part.from_text(
                 text=f"ALERT: anchor drag reported on cable '{cable_id}'. Gradient sync between US-East-Ashburn "
                      "and EU-West-Dublin has stalled. Restore it.")])]
 
             for _ in range(MAX_TURNS):
-                response = await client.aio.models.generate_content(model=s.gemini_model, contents=contents,
-                                                                    config=config)
+                try:
+                    response = await asyncio.wait_for(
+                        client.aio.models.generate_content(model=s.gemini_model, contents=contents, config=config),
+                        timeout=TURN_TIMEOUT_S)
+                except asyncio.TimeoutError:
+                    raise RuntimeError(f"{s.gemini_model} did not answer within {TURN_TIMEOUT_S:.0f} s") from None
                 candidate = response.candidates[0] if response.candidates else None
                 if candidate is None or candidate.content is None:
                     summary = "Model returned no content."
