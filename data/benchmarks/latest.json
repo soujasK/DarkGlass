@@ -1,0 +1,279 @@
+{
+  "generated_at": "2026-10-16T18:11:19Z",
+  "duration_s": 47.1,
+  "mode": "standard",
+  "iterations": {
+    "falkordb_search": 1000,
+    "falkordb_cycle": 100,
+    "networkx_search": 100,
+    "centrality_sampled": 20,
+    "centrality_exact": 3,
+    "sql": 3
+  },
+  "machine": {
+    "python": "3.11.9",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "networkx": "3.6.1",
+    "sqlite": "3.45.1"
+  },
+  "workload": {
+    "question": "3 lowest-latency simple paths IAD->DUB avoiding SRLG-USE-VAB-SHELF, >= 3.2 Tbps headroom per hop, <= 50.0 ms",
+    "stations": 1790,
+    "spans_directed": 8900
+  },
+  "parity": {
+    "topology_file": "1f5ee52c193185cdfacc4a7d17c5d534584ad150924d7866e5705645a8659a41",
+    "falkordb": "1f5ee52c193185cdfacc4a7d17c5d534584ad150924d7866e5705645a8659a41",
+    "networkx": "1f5ee52c193185cdfacc4a7d17c5d534584ad150924d7866e5705645a8659a41",
+    "sqlite": "1f5ee52c193185cdfacc4a7d17c5d534584ad150924d7866e5705645a8659a41",
+    "verified": true
+  },
+  "results_agree": {
+    "falkordb": 30.4075,
+    "networkx": 30.4075,
+    "sqlite_deepest_completed": 30.4075,
+    "falkordb_equals_networkx": true
+  },
+  "falkordb": {
+    "fingerprint": "1f5ee52c193185cdfacc4a7d17c5d534584ad150924d7866e5705645a8659a41",
+    "best_path": {
+      "latency_ms": 30.4075,
+      "hops": 8,
+      "spans": [
+        "backhaul:IAD>WAL",
+        "havfrueaec-2:WAL>LCV",
+        "backhaul:LCV>GWY",
+        "backhaul:GWY>ORK",
+        "backhaul:ORK>KQU",
+        "backhaul:KQU>BAK",
+        "backhaul:BAK>SNM",
+        "backhaul:SNM>DUB"
+      ]
+    },
+    "detour_search": {
+      "wall_ms": {
+        "n": 1000,
+        "p50": 2.0358,
+        "p95": 3.5537,
+        "p99": 4.2345,
+        "mean": 2.1719,
+        "min": 1.2307,
+        "max": 4.8262
+      },
+      "engine_ms": {
+        "n": 1000,
+        "p50": 0.7999,
+        "p95": 1.4058,
+        "p99": 1.6167,
+        "mean": 0.8823,
+        "min": 0.4897,
+        "max": 1.9661
+      }
+    },
+    "detour_tool_cycle": {
+      "wall_ms": {
+        "n": 100,
+        "p50": 49.5523,
+        "p95": 69.9434,
+        "p99": 79.0401,
+        "mean": 49.8975,
+        "min": 30.0227,
+        "max": 80.7987
+      }
+    },
+    "centrality_sampled": {
+      "wall_ms": {
+        "n": 20,
+        "p50": 23.542,
+        "p95": 28.3873,
+        "p99": 29.6898,
+        "mean": 23.6316,
+        "min": 17.3105,
+        "max": 30.0154
+      },
+      "engine_ms": {
+        "n": 20,
+        "p50": 21.9901,
+        "p95": 27.0234,
+        "p99": 28.0791,
+        "mean": 22.0822,
+        "min": 15.8835,
+        "max": 28.343
+      }
+    },
+    "centrality_exact": {
+      "wall_ms": {
+        "n": 3,
+        "p50": 831.7943,
+        "p95": 845.7494,
+        "p99": 846.9899,
+        "mean": 816.6259,
+        "min": 770.7833,
+        "max": 847.3
+      },
+      "engine_ms": {
+        "n": 3,
+        "p50": 830.4615,
+        "p95": 844.5801,
+        "p99": 845.8351,
+        "mean": 815.3992,
+        "min": 769.5872,
+        "max": 846.1488
+      }
+    }
+  },
+  "networkx": {
+    "fingerprint": "1f5ee52c193185cdfacc4a7d17c5d534584ad150924d7866e5705645a8659a41",
+    "best_path": {
+      "latency_ms": 30.4075,
+      "hops": 8,
+      "spans": [
+        "backhaul:IAD>WAL",
+        "havfrueaec-2:WAL>LCV",
+        "backhaul:LCV>GWY",
+        "backhaul:GWY>ORK",
+        "backhaul:ORK>KQU",
+        "backhaul:KQU>BAK",
+        "backhaul:BAK>SNM",
+        "backhaul:SNM>DUB"
+      ]
+    },
+    "detour_search": {
+      "wall_ms": {
+        "n": 100,
+        "p50": 34.036,
+        "p95": 56.9285,
+        "p99": 72.4244,
+        "mean": 37.3707,
+        "min": 23.6638,
+        "max": 79.3523
+      }
+    },
+    "centrality_sampled": {
+      "wall_ms": {
+        "n": 20,
+        "p50": 131.0828,
+        "p95": 175.8084,
+        "p99": 176.3168,
+        "mean": 129.9281,
+        "min": 97.8078,
+        "max": 176.4439
+      }
+    },
+    "centrality_exact": {
+      "wall_ms": {
+        "n": 3,
+        "p50": 7510.3729,
+        "p95": 7751.2823,
+        "p99": 7772.6965,
+        "mean": 7491.9513,
+        "min": 7187.4309,
+        "max": 7778.05
+      }
+    }
+  },
+  "sqlite": {
+    "fingerprint": "1f5ee52c193185cdfacc4a7d17c5d534584ad150924d7866e5705645a8659a41",
+    "runs": [
+      {
+        "max_hops": 4,
+        "status": "OK",
+        "timeout_s": 30.0,
+        "wall_ms": {
+          "n": 3,
+          "p50": 0.8164,
+          "p95": 1.2583,
+          "p99": 1.2976,
+          "mean": 0.9621,
+          "min": 0.7624,
+          "max": 1.3074
+        },
+        "best_path": null
+      },
+      {
+        "max_hops": 6,
+        "status": "OK",
+        "timeout_s": 30.0,
+        "wall_ms": {
+          "n": 3,
+          "p50": 4.4354,
+          "p95": 5.3564,
+          "p99": 5.4382,
+          "mean": 4.6247,
+          "min": 3.9799,
+          "max": 5.4587
+        },
+        "best_path": {
+          "latency_ms": 33.4623,
+          "hops": 6
+        }
+      },
+      {
+        "max_hops": 8,
+        "status": "OK",
+        "timeout_s": 30.0,
+        "wall_ms": {
+          "n": 3,
+          "p50": 34.581,
+          "p95": 40.0278,
+          "p99": 40.512,
+          "mean": 35.1573,
+          "min": 30.2578,
+          "max": 40.633
+        },
+        "best_path": {
+          "latency_ms": 30.4075,
+          "hops": 8
+        }
+      },
+      {
+        "max_hops": 10,
+        "status": "OK",
+        "timeout_s": 30.0,
+        "wall_ms": {
+          "n": 3,
+          "p50": 322.9099,
+          "p95": 358.8949,
+          "p99": 362.0935,
+          "mean": 327.9031,
+          "min": 297.9061,
+          "max": 362.8932
+        },
+        "best_path": {
+          "latency_ms": 30.4075,
+          "hops": 8
+        }
+      },
+      {
+        "max_hops": 12,
+        "status": "OK",
+        "timeout_s": 30.0,
+        "wall_ms": {
+          "n": 3,
+          "p50": 1769.9504,
+          "p95": 1823.8628,
+          "p99": 1828.655,
+          "mean": 1741.7344,
+          "min": 1625.3997,
+          "max": 1829.8531
+        },
+        "best_path": {
+          "latency_ms": 30.4075,
+          "hops": 8
+        }
+      }
+    ]
+  },
+  "headline": {
+    "falkordb_sppaths_engine_p50_ms": 0.7999,
+    "falkordb_sppaths_wall_p50_ms": 2.0358,
+    "networkx_yen_wall_p50_ms": 34.036,
+    "sqlite_cte_status": "OK",
+    "sqlite_cte_max_hops": 12,
+    "sqlite_cte_wall_ms": 1769.9504,
+    "falkordb_betweenness_sampled_engine_p50_ms": 21.9901,
+    "networkx_betweenness_sampled_p50_ms": 131.0828,
+    "falkordb_betweenness_exact_engine_p50_ms": 830.4615,
+    "networkx_betweenness_exact_p50_ms": 7510.3729
+  }
+}
