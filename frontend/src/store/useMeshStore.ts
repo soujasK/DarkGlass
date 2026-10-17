@@ -150,7 +150,7 @@ export const useMeshStore = create<MeshState>((set, get) => ({
   queue: [],
   steps: [],
   agentRunning: false,
-  agentMode: "playbook",
+  agentMode: "llm",
   agentResult: null,
   detour: null,
   detourIgnitedAt: null,
@@ -228,7 +228,7 @@ export const useMeshStore = create<MeshState>((set, get) => ({
         });
         break;
       case "agent.error":
-        set({ agentRunning: false, notice: `agent error: ${p.error}` });
+        set({ agentRunning: false, notice: `agent error: ${p.error}. Pick Playbook to run without Gemini.` });
         break;
       default:
         break;

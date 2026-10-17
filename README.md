@@ -19,7 +19,7 @@ avoids the damaged trench, checks it for bottlenecks, and moves the traffic. The
 |---|---|
 | ![Start](docs/screenshots/1-start.png) | **Incident.** Pick any of the 603 cables from the searchable list and cut it. |
 | ![Cut](docs/screenshots/2-cable-cut.png) | **Input.** The cable goes dark, a counter shows the money burning, and FalkorDB recalls past failures of this cable from its incident memory. |
-| ![Restored](docs/screenshots/3-restored.png) | **Output.** The agent (a deterministic playbook, or Gemini 4 Argon choosing the queries itself) restores training. The graph view shows the 11-hop path FalkorDB walked, the GPUs, servers, racks and halls behind the cut, and the tunnel's `CARRIED_BY` edge moving to the new cable. |
+| ![Restored](docs/screenshots/3-restored.png) | **Output.** The agent (Gemini 4 Argon choosing the queries itself over MCP, or a deterministic playbook) restores training. The graph view shows the 11-hop path FalkorDB walked, the GPUs, servers, racks and halls behind the cut, and the tunnel's `CARRIED_BY` edge moving to the new cable. |
 | ![Planet scan](docs/screenshots/4-planet-scan-running.png) | **Planet scan.** FalkorDB cuts every one of the 603 cables, one at a time, in four parallel sandbox copies of the graph. The globe becomes a risk heat map. |
 | ![Scan result](docs/screenshots/5-planet-scan.png) | The worst cables for the planet (countries cut off), for transatlantic capacity, and for our GPUs. |
 | ![Ask](docs/screenshots/6-ask-the-graph.png) | **Ask the graph.** Gemini writes the Cypher, FalkorDB answers in milliseconds, and the answer lights up on the globe. |
@@ -159,8 +159,8 @@ Ports: frontend 3000, API 8010, FalkorDB 6390, FalkorDB browser 3001. They are d
 
 **Gemini 4 Argon (optional).** It runs on Google Cloud Vertex AI with your gcloud login; no API key
 is stored. Run `gcloud auth application-default login`, then set `DARKGLASS_VERTEX_PROJECT_ID` (see
-`backend/.env.example`). Without it, everything works except Ask the graph and the Gemini agent
-option.
+`backend/.env.example`). Gemini is the default agent. Without it, choose **Playbook** under Agent;
+everything else works except Ask the graph.
 
 **Tests** (FalkorDB must be running):
 
@@ -204,9 +204,11 @@ as a **FastMCP server** (`python -m mcp_server.server`), so any MCP client can c
 | `execute_spectrum_reallocation` | Atomic bandwidth reservation, demoting backup traffic, rebinding the tunnel, and a simulated ROADM configuration |
 
 There are two ways to run the agent:
-- **Playbook:** a deterministic loop.
-- **Gemini 4 Argon:** the model chooses which tools to call and with what arguments, then writes an
+- **Gemini 4 Argon (the default):** the agent starts the FastMCP server, discovers the tools with MCP
+  `list_tools`, and the model chooses which tools to call and with what arguments, then writes an
   operator summary.
+- **Playbook:** a deterministic loop over the same four tools, with no model. Pick it under Agent if
+  Vertex AI is not set up; a Gemini run without credentials stops with an error saying so.
 
 Claude (Anthropic API or Vertex) is also supported in `mcp_server/agent_runner.py`.
 

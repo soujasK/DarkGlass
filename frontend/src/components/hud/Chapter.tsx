@@ -38,14 +38,14 @@ function Eyebrow({ children, tone = "text-silica/60" }: { children: ReactNode; t
   return <div className={`font-mono text-[11px] uppercase tracking-[0.24em] ${tone}`}>{children}</div>;
 }
 
-/** Who drives the fix: the deterministic playbook, or the LLM choosing FalkorDB tools itself. */
+/** Who drives the fix: the LLM choosing FalkorDB tools over MCP (default), or the deterministic playbook. */
 function AgentPicker() {
   const mode = useMeshStore((st) => st.agentMode);
   const model = useMeshStore((st) => st.health?.llm_model) ?? "Gemini";
   const set = useMeshStore((st) => st.set);
   const opts: ["playbook" | "llm", string][] = [
-    ["playbook", "Playbook"],
     ["llm", prettyModel(model)],
+    ["playbook", "Playbook"],
   ];
   return (
     <div className="mt-5 flex items-center gap-1 font-sans text-[13px]">

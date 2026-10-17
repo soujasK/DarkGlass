@@ -22,7 +22,7 @@ class AnchorDragRequest(BaseModel):
 
 
 class AgentRunRequest(BaseModel):
-    mode: Literal["playbook", "llm"] = "playbook"
+    mode: Literal["playbook", "llm"] = "llm"
 
 
 class AskRequest(BaseModel):
