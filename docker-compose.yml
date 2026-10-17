@@ -1,0 +1,15 @@
+services:
+  falkordb:
+    image: falkordb/falkordb:latest
+    container_name: darkglass-falkordb
+    ports:
+      - "6390:6379"   # Redis protocol (host 6390 avoids clashing with a local Redis)
+      - "3001:3000"   # FalkorDB Browser UI
+    volumes:
+      - falkordb-data:/var/lib/falkordb/data   # the graph survives container restarts
+    environment:
+      # Bound runaway queries; the agent's queries finish in milliseconds.
+      FALKORDB_ARGS: "TIMEOUT_DEFAULT 15000 TIMEOUT_MAX 120000"
+
+volumes:
+  falkordb-data:

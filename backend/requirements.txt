@@ -1,0 +1,13 @@
+# DarkGlass backend + MCP server (Python 3.11+)
+falkordb>=1.8,<2
+redis>=5
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic-settings>=2.4
+networkx>=3.3
+pycountry>=24.6
+# FastMCP lives in the official SDK's 1.x line (2.x renamed it MCPServer)
+mcp>=1.9,<2
+anthropic[mcp]>=1.0
+httpx>=0.27
+pytest
