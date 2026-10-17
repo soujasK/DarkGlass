@@ -113,9 +113,9 @@ export function ScanPanel() {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[56vh] bg-gradient-to-t from-void via-void/95 to-transparent" />
         <div className="chapter-in-late absolute bottom-[clamp(150px,22vh,200px)] left-[64px] right-[64px] z-20 grid grid-cols-3 gap-12">
         <Board
-          title="Cuts off countries"
+          title="Strands landing stations"
           cards={s.top_planet}
-          line={(c) => `${c.countries.length} countries`}
+          line={(c) => `${c.isolated} in ${c.countries.length} ${c.countries.length === 1 ? "country" : "countries"}`}
           onPick={pick}
         />
         <Board
@@ -153,7 +153,7 @@ export function ScanPanel() {
 const EXAMPLES = [
   "Which training jobs depend on cables landing at Virginia Beach?",
   "Which cables land in Ireland, and how much capacity does each have?",
-  "Which five cables would cut off the most countries if they failed?",
+  "Which five cables would strand the most landing stations if they failed?",
 ];
 
 export function AskPanel() {

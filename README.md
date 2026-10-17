@@ -21,7 +21,7 @@ avoids the damaged trench, checks it for bottlenecks, and moves the traffic. The
 | ![Cut](docs/screenshots/2-cable-cut.png) | **Input.** The cable goes dark, a counter shows the money burning, and FalkorDB recalls past failures of this cable from its incident memory. |
 | ![Restored](docs/screenshots/3-restored.png) | **Output.** The agent (Gemini 4 Argon choosing the queries itself over MCP, or a deterministic playbook) restores training. The graph view shows the 11-hop path FalkorDB walked, the GPUs, servers, racks and halls behind the cut, and the tunnel's `CARRIED_BY` edge moving to the new cable. |
 | ![Planet scan](docs/screenshots/4-planet-scan-running.png) | **Planet scan.** FalkorDB cuts every one of the 603 cables, one at a time, in four parallel sandbox copies of the graph. The globe becomes a risk heat map. |
-| ![Scan result](docs/screenshots/5-planet-scan.png) | The worst cables for the planet (countries cut off), for transatlantic capacity, and for our GPUs. |
+| ![Scan result](docs/screenshots/5-planet-scan.png) | The worst cables for the planet (landing stations stranded from the subsea network), for transatlantic capacity, and for our GPUs (GPUs whose gradient sync would freeze). |
 | ![Ask](docs/screenshots/6-ask-the-graph.png) | **Ask the graph.** Gemini writes the Cypher, FalkorDB answers in milliseconds, and the answer lights up on the globe. |
 | ![Proof](docs/screenshots/7-proof.png) | **Proof.** The same question on the same data, run in FalkorDB, Python NetworkX and SQL. |
 
@@ -41,7 +41,7 @@ when FalkorDB actually runs it, with real call counts taken from query telemetry
 | Multi-hop Cypher traversal | "Who is hurt?": one 11-hop path from landing station to cable, tunnel, border router, super-spine, spine, leaf, server, NIC, GPU, sync ring and job, plus a sweep that locates every affected GPU to its server, rack, hall and campus (32,768 GPUs for Dunant in about 0.15 s) |
 | `algo.SPpaths` | The fastest detour that avoids the damaged trench and has enough free capacity |
 | `algo.betweenness` | Checks the detour for overloaded relay stations |
-| `algo.WCC` | Planet scan: which stations and countries are cut off after each failure |
+| `algo.WCC` | Planet scan: which landing stations fall off the main subsea network after each failure, and in which countries. A stranded station is not a country offline: inland fibre is not modelled |
 | `algo.maxFlow` | Planet scan: total North America to Europe capacity left after each failure (multi-source, multi-sink) |
 | `GRAPH.COPY` | Planet scan: four sandbox copies of the planet run in parallel; production is never touched |
 | Live mutations | Cuts, atomic all-or-nothing bandwidth reservation, tunnel rebinding, scan results written back |
@@ -117,7 +117,7 @@ The SQL time grows exponentially with path length. At 4, 6, 8, 10 and 12 hops it
 One caveat: the 0.8 ms figure is the search alone. The full detour tool, including masking and
 restoring about 1,200 low-capacity links, takes about 50 ms.
 
-Planet scan: 603 failures in about 15 s on the development machine. Each scan runs roughly 600 WCC
+Planet scan: 603 failures in 15 to 45 s on the development machine, depending on load. Each scan runs roughly 600 WCC
 calls, 300 max-flow runs, 1,800 mutations and 3,000 index lookups.
 
 ### Ask the graph: eval
@@ -166,7 +166,7 @@ everything else works except Ask the graph.
 
 ```bash
 cd backend
-pytest -q              # 120 unit, scenario and end-to-end tests, about 2 minutes
+pytest -q              # 125 unit, scenario and end-to-end tests, about 2 minutes
 pytest -q -m slow      # also the full 603-cable planet scan
 ```
 

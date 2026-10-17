@@ -70,7 +70,11 @@ export function useStory(): Story {
   const blast = inc?.blast_radius;
   const stalls = !!blast?.affected_tunnels?.some((t: any) => t.traffic_class === "GRADIENT_SYNC");
   const jobs = blast?.affected_jobs ?? [];
-  const gpus = jobs.reduce((a: number, j: any) => a + j.gpu_count, 0);
+  // Frozen = jobs whose gradient sync rides the cut; checkpoint or backup traffic slows a job, it does not stop it.
+  const syncJobs = new Set(
+    (blast?.affected_tunnels ?? []).filter((t: any) => t.traffic_class === "GRADIENT_SYNC").flatMap((t: any) => t.jobs),
+  );
+  const gpus = jobs.filter((j: any) => syncJobs.has(j.job_id)).reduce((a: number, j: any) => a + j.gpu_count, 0);
   const ratePerSec = (snapshot?.loss_rate_usd_hr ?? 18420) / 3600;
   const now = Date.now() / 1000 + clockOffset;
   const stallSeconds = inc && stalls ? Math.max(0, (inc.resolved_at ?? now) - inc.started_at) : 0;

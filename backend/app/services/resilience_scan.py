@@ -61,8 +61,9 @@ RETURN pathWeight
 """
 GPU_IMPACT = """
 MATCH (cs:CableSystem {id: $cable})<-[:CARRIED_BY]-(t:LogicalTunnel)<-[:USES_TUNNEL]-(:NCCL_Ring)<-[:COORDINATES]-(j:TrainingJob)
-WITH collect(DISTINCT t.traffic_class) AS classes, collect(DISTINCT j) AS jobs
-RETURN classes, reduce(g = 0, j IN jobs | g + j.gpu_count) AS gpus,
+WITH collect(DISTINCT t.traffic_class) AS classes,
+     collect(DISTINCT CASE WHEN t.traffic_class = 'GRADIENT_SYNC' THEN j END) AS frozen
+RETURN classes, reduce(g = 0, j IN frozen | g + j.gpu_count) AS gpus,
        any(c IN classes WHERE c = 'GRADIENT_SYNC') AS stalls
 """
 NORTH_AMERICA = ["United States", "Canada"]
@@ -278,7 +279,7 @@ def run_scan(progress: Callable[[dict[str, Any]], None] | None = None) -> dict[s
             "top": [_card(r) for r in results[:12]],
             "top_cluster": [_card(r) for r in sorted(results, key=lambda r: (r["gpus"], r["capacity_loss"]),
                                                     reverse=True)[:5] if r["gpus"]],
-            "top_planet": [_card(r) for r in sorted(results, key=lambda r: (len(r["countries"]), r["isolated"]),
+            "top_planet": [_card(r) for r in sorted(results, key=lambda r: (r["isolated"], len(r["countries"])),
                                                    reverse=True)[:5] if r["isolated"]],
             "top_capacity": [_card(r) for r in sorted(results, key=lambda r: r["capacity_loss"],
                                                      reverse=True)[:5] if r["capacity_loss"] > 0],
@@ -311,7 +312,7 @@ def summary_from_graph() -> dict[str, Any] | None:
         ORDER BY rank
     """, read_only=True).rows
     for r in rows:
-        r.update(stalls=r["gpus"] >= 65_536, unreachable=r["latency_delta"] is None, classes=[])
+        r.update(stalls=(r["gpus"] or 0) > 0, unreachable=r["latency_delta"] is None, classes=[])
     max_risk = max((r["risk"] for r in rows), default=1.0) or 1.0
     return {
         "id": s["id"],
@@ -327,7 +328,7 @@ def summary_from_graph() -> dict[str, Any] | None:
         "top": [_card(r) for r in rows[:12]],
         "top_cluster": [_card(r) for r in sorted(rows, key=lambda r: (r["gpus"], r["capacity_loss"]),
                                                 reverse=True)[:5] if r["gpus"]],
-        "top_planet": [_card(r) for r in sorted(rows, key=lambda r: (len(r["countries"]), r["isolated"]),
+        "top_planet": [_card(r) for r in sorted(rows, key=lambda r: (r["isolated"], len(r["countries"])),
                                                reverse=True)[:5] if r["isolated"]],
         "top_capacity": [_card(r) for r in sorted(rows, key=lambda r: r["capacity_loss"],
                                                  reverse=True)[:5] if r["capacity_loss"] > 0],

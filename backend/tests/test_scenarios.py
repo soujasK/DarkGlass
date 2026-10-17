@@ -289,6 +289,20 @@ def test_traffic_left_on_the_cut_cable_is_reported(client, cable, down):
         assert cable in live[tid]["carried_by"], "reported as down because it really is"
 
 
+@pytest.mark.parametrize("cable,frozen", [
+    ("pan-european-crossing-uk-ireland", 65_536),  # also carries checkpoint and backup jobs: they slow, not freeze
+    ("dunant", 65_536),
+    ("sea2shore", 0),
+    ("havfrueaec-2", 0),
+    ("kafos", 0),
+])
+def test_scan_counts_only_gpus_whose_gradient_sync_freezes(cable, frozen):
+    """Regression: the planet scan used to count every job on the cable as frozen (75,776 for PEC)."""
+    from app.services.resilience_scan import GPU_IMPACT
+
+    assert q(GPU_IMPACT, {"cable": cable})[0]["gpus"] == frozen
+
+
 def test_repeated_cycles_return_to_an_identical_graph(client):
     def fingerprint():
         return (q("MATCH ()-[r:OPTICAL_SPAN]->() RETURN count(r) AS n, sum(r.available_capacity_tbps) AS cap")[0],
