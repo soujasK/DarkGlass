@@ -145,6 +145,8 @@ async def run_gemini(cable_id: str, emit: Emit, system_prompt: str) -> dict[str,
     moved = [t for t in tunnels if t["tunnel_id"] in rebound]
     riders = {j for t in moved for j in t.get("jobs", [])}
     route_ms = (realloc or {}).get("route_latency_ms")
+    from mcp_server.agent_runner import _still_down
+
     result = {
         "restored": restored,
         "mode": "llm",
@@ -155,6 +157,7 @@ async def run_gemini(cable_id: str, emit: Emit, system_prompt: str) -> dict[str,
         "traffic_class": moved[0]["traffic_class"] if moved else None,
         "detour": chosen,
         "rerouted_tunnels": [t["tunnel_id"] for t in moved],
+        "still_down": _still_down(blast, {t["tunnel_id"] for t in moved}),
         "restored_rings": sorted({r for t in moved for r in t.get("rings", [])}),
         "restored_gpus": sum(j["gpu_count"] for j in blast.get("affected_jobs", []) if j["job_id"] in riders),
         "spectrum_tbps": (realloc or {}).get("roadm_configuration_payload", {}).get("slice_tbps"),

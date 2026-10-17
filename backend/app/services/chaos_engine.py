@@ -122,7 +122,7 @@ class ChaosEngine:
         from mcp_server.tools.blast_radius import trace_severed_blast_radius
 
         with self._lock:
-            if self.incident and self.incident["stall_active"]:
+            if self.incident and self.incident["degraded"] and not self.incident["resolved_at"]:
                 raise RuntimeError("an incident is already active; reset first")
             res = run(SEVER, {"cable_id": cable_id})
             if not res.rows:
@@ -175,7 +175,7 @@ class ChaosEngine:
             self.incident["agent"] = agent_result
             if agent_result.get("restored"):
                 self.incident["stall_active"] = False
-                self.incident["degraded"] = False
+                self.incident["degraded"] = bool(agent_result.get("still_down"))
                 self.incident["resolved_at"] = time.time()
                 self._remember(agent_result)
             return self.snapshot()

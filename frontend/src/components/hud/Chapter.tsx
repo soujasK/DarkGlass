@@ -78,6 +78,12 @@ function Memory({ history, cable }: { history: any; cable: string }) {
   );
 }
 
+const CLASS_LABEL: Record<string, string> = {
+  GRADIENT_SYNC: "gradient sync",
+  CHECKPOINT_BURST: "checkpoint traffic",
+  BULK_BACKUP: "backup traffic",
+};
+
 /** Why this route: the decision explained with what the graph returned at each step. */
 function why(s: Story): string | null {
   const blast = s.byStep(TOOL_ORDER[0]);
@@ -305,7 +311,7 @@ export default function Chapter() {
     const vsSql: [string, string] = live
       ? [`${live.speedup.vs_sqlite_is_lower_bound ? ">" : ""}${Math.round(live.speedup.vs_sqlite).toLocaleString()}x`, "faster than SQL, this cut"]
       : measuring
-        ? ["â€”", "vs SQL, measuring now"]
+        ? ["—", "vs SQL, measuring now"]
         : ["4", "graph queries"];
     const stats: [string, string][] = [
       s.stalls ? [(result.restored_gpus ?? s.gpus).toLocaleString(), "GPUs back"] : [`${result.spectrum_tbps} Tbps`, "rerouted"],
@@ -330,6 +336,12 @@ export default function Chapter() {
           </p>
         )}
         {why(s) && <p className="mt-3 max-w-[480px] font-sans text-[14px] leading-[21px] text-silica/45">{why(s)}</p>}
+        {!!result.still_down?.length && (
+          <p className="mt-3 max-w-[480px] font-sans text-[14px] leading-[21px] text-crimson/80">
+            Not fixed yet: {[...new Set(result.still_down.map((t) => CLASS_LABEL[t.traffic_class] ?? t.traffic_class))].join(" and ")}{" "}
+            {result.still_down.length === 1 ? "is" : "are"} still on the cut cable. The agent moves the most critical traffic first.
+          </p>
+        )}
         <div className="gap-section flex gap-14">
           {stats.map(([v, k]) => (
             <div key={k}>

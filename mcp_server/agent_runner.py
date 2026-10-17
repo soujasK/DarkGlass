@@ -65,6 +65,12 @@ def _plan(blast: dict[str, Any]) -> tuple[list[dict], dict, str] | None:
     return None
 
 
+def _still_down(blast: dict[str, Any], moved: set[str]) -> list[dict[str, str]]:
+    """Tunnels the cut hurt that this run did not move: reported, never hidden behind 'restored'."""
+    return [{"tunnel_id": t["tunnel_id"], "traffic_class": t["traffic_class"]}
+            for t in blast.get("affected_tunnels", []) if t["tunnel_id"] not in moved]
+
+
 def _finish(result: dict[str, Any], steps: list[dict], started: float) -> dict[str, Any]:
     result["graph_engine_ms"] = round(sum(s["result"].get("engine_ms", 0.0) for s in steps), 4)
     result["graph_wall_ms"] = round(sum(s["result"].get("wall_ms", 0.0) for s in steps), 4)
@@ -139,6 +145,7 @@ async def run_playbook(cable_id: str, emit: Emit = _noop_emit) -> dict[str, Any]
         "traffic_class": traffic_class,
         "detour": chosen if restored else None,
         "rerouted_tunnels": sorted(moved) if restored else [],
+        "still_down": _still_down(blast, moved if restored else set()),
         "restored_rings": sorted({r for t in group for r in t["rings"]}) if restored else [],
         "restored_gpus": sum(j["gpu_count"] for j in blast["affected_jobs"] if j["job_id"] in riders)
         if restored else 0,

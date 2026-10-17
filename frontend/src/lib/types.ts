@@ -70,6 +70,7 @@ export type AgentResult = {
   detour: Candidate | null;
   traffic_class?: string;
   rerouted_tunnels?: string[];
+  still_down?: { tunnel_id: string; traffic_class: string }[];
   restored_rings?: string[];
   restored_gpus?: number;
   spectrum_tbps?: number;
