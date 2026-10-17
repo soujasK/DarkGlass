@@ -1,0 +1,332 @@
+"use client";
+
+import type { ReactNode } from "react";
+import { api } from "@/lib/api";
+import type { Snapshot } from "@/lib/types";
+import { useMeshStore } from "@/store/useMeshStore";
+import { TOOL_ORDER, placeName, useStory, type Story } from "@/store/useStory";
+import CablePicker, { CableCard } from "./CablePicker";
+import Roll from "./Roll";
+
+const QUESTIONS = ["Who is hurt?", "Find a safe detour.", "Check for bottlenecks.", "Move the traffic."];
+const prettyModel = (m?: string) =>
+  (m ?? "Gemini").replace(/^gemini-/, "Gemini ").replace(/-argon$/, " Argon").replace(/-/g, " ");
+const duration = (ms: number) => (ms >= 2000 ? `${(ms / 1000).toFixed(1)} s` : `${Math.round(ms)} ms`);
+const money = (v: number, dp = 2) =>
+  `$${v.toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp })}`;
+
+const H1 = "display-h1 font-sans font-semibold tracking-[-0.04em] text-silica";
+const LINE = "gap-line font-sans text-[17px] leading-[26px] text-silica/55";
+
+function Primary({ children, onClick, tone }: { children: ReactNode; onClick: () => void; tone: "crimson" | "amber" }) {
+  const cls =
+    tone === "crimson"
+      ? "bg-crimson text-white shadow-[0_0_40px_rgba(225,29,72,0.35)] hover:shadow-[0_0_60px_rgba(225,29,72,0.55)]"
+      : "bg-amber-laser text-void shadow-[0_0_40px_rgba(253,230,138,0.35)] hover:shadow-[0_0_60px_rgba(253,230,138,0.6)]";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`gap-action inline-flex items-center rounded-full px-7 py-3.5 font-sans text-[15px] font-medium tracking-tight transition-shadow duration-300 ${cls}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Eyebrow({ children, tone = "text-silica/60" }: { children: ReactNode; tone?: string }) {
+  return <div className={`font-mono text-[11px] uppercase tracking-[0.24em] ${tone}`}>{children}</div>;
+}
+
+/** Who drives the fix: the deterministic playbook, or the LLM choosing FalkorDB tools itself. */
+function AgentPicker() {
+  const mode = useMeshStore((st) => st.agentMode);
+  const model = useMeshStore((st) => st.health?.llm_model) ?? "Gemini";
+  const set = useMeshStore((st) => st.set);
+  const opts: ["playbook" | "llm", string][] = [
+    ["playbook", "Playbook"],
+    ["llm", prettyModel(model)],
+  ];
+  return (
+    <div className="mt-5 flex items-center gap-1 font-sans text-[13px]">
+      <span className="mr-2 text-silica/35">Agent</span>
+      {opts.map(([k, label]) => (
+        <button
+          key={k}
+          type="button"
+          onClick={() => set({ agentMode: k })}
+          className={`rounded-full px-3 py-1 transition-colors ${mode === k ? "bg-white/[0.08] text-silica" : "text-silica/40 hover:text-silica"}`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** "Graph memory" line: what FalkorDB remembers about previous failures of this cable. */
+function Memory({ history, cable }: { history: any; cable: string }) {
+  if (!history?.failures) return null;
+  const last = history.last;
+  const via = last?.via?.length ? last.via.join(", ") : null;
+  const ms = typeof last?.agent_ms === "number" ? (last.agent_ms >= 2000 ? `${(last.agent_ms / 1000).toFixed(1)} s` : `${Math.round(last.agent_ms)} ms`) : null;
+  return (
+    <p className="mt-3 font-sans text-[14px] text-phosphor/85">
+      Graph memory: {cable} has failed {history.failures === 1 ? "once" : `${history.failures} times`} before
+      {via ? `, last fixed via ${via}${ms ? ` in ${ms}` : ""}` : ""}.
+    </p>
+  );
+}
+
+/** One-line answer per question; the full result is a click away in the drawer. */
+function answer(i: number, s: Story): string {
+  const r = s.byStep(TOOL_ORDER[i]);
+  if (!r) return "";
+  switch (i) {
+    case 0:
+      return r.affected_jobs?.[0] ? `${s.gpus.toLocaleString()} GPUs on ${r.affected_rings?.length ?? 0} rings` : "No job affected";
+    case 1: {
+      const x = (r.hops ?? []).find((h: any) => h.medium === "SUBSEA");
+      return r.path_found && x ? `${s.cableName(x.cable)}, ${r.total_latency_ms?.toFixed(1)} ms` : "None in budget";
+    }
+    case 2:
+      return r.highest_centrality_station ? `${r.stations?.length ?? 0} stations clear` : "Clear";
+    case 3:
+      return `${r.roadm_configuration_payload?.slice_tbps} Tbps reserved`;
+    default:
+      return "";
+  }
+}
+
+function Reasoning({ s }: { s: Story }) {
+  const set = useMeshStore((st) => st.set);
+  return (
+    <ol className="mt-10 w-[440px]">
+      {QUESTIONS.map((q, i) => {
+        const step = s.steps.find((x) => x.tool === TOOL_ORDER[i]);
+        const r = step?.result;
+        const live = !!step && !r;
+        return (
+          <li
+            key={q}
+            className={`flex items-baseline justify-between border-t border-white/[0.06] py-3.5 transition-opacity duration-700 ${
+              step ? "opacity-100" : "opacity-25"
+            }`}
+          >
+            <span className="font-sans text-[15px] tracking-tight text-silica">{q}</span>
+            <span className="flex items-baseline gap-4">
+              <span className="font-sans text-[13px] text-silica/45">{r ? answer(i, s) : ""}</span>
+              {r ? (
+                <button
+                  type="button"
+                  title="open the Cypher"
+                  onClick={() => set({ drawerOpen: true, selectedTrace: { step: step!.step, index: 0 } })}
+                  className="w-[64px] text-right font-mono text-[11px] text-phosphor hover:underline"
+                >
+                  {r.engine_ms?.toFixed(1)} ms
+                </button>
+              ) : (
+                <span className={`w-[64px] text-right font-mono text-[11px] ${live ? "animate-pulse text-phosphor" : ""}`}>
+                  {live ? "..." : ""}
+                </span>
+              )}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+export default function Chapter() {
+  const s = useStory();
+  const st = useMeshStore();
+  const { phase, inc, result } = s;
+  const report = st.benchmark;
+
+  const guard = async (fn: () => Promise<void>) => {
+    try {
+      st.set({ notice: null });
+      await fn();
+    } catch (e) {
+      st.set({ notice: (e as Error).message });
+    }
+  };
+  const cut = () =>
+    guard(async () => {
+      st.clearRun();
+      st.setSnapshot(await api.anchorDrag(st.selectedCable));
+    });
+  const fix = () =>
+    guard(async () => {
+      // Switch to the reasoning view immediately; the run's own events then fill it in.
+      st.set({ agentRunning: true, steps: [], agentResult: null });
+      try {
+        const res = await api.runAgent(st.agentMode);
+        if ("server_time" in res) st.setSnapshot(res as Snapshot);
+      } catch (e) {
+        st.set({ agentRunning: false });
+        throw e;
+      }
+    });
+
+  /** One click: restore the network, then cut the chosen cable. */
+  const nextScenario = (id: string) =>
+    guard(async () => {
+      st.clearRun();
+      st.setSnapshot(await api.reset());
+      st.set({ selectedCable: id });
+      st.setSnapshot(await api.anchorDrag(id));
+      const [tunnels, health] = await Promise.all([api.tunnels(), api.health()]);
+      st.set({ tunnels, health });
+    });
+
+  const target = st.catalog.find((c) => c.id === st.selectedCable) ?? st.faultCables.find((c) => c.id === st.selectedCable);
+
+  const tryAnother = (
+    <div className="gap-section">
+      <Eyebrow>Try another scenario</Eyebrow>
+      <div className="mt-2">
+        <CablePicker value={null} exclude={inc?.cable_id} label="Cut a different cable" onChange={(id) => nextScenario(id)} />
+      </div>
+    </div>
+  );
+
+  let body: ReactNode = null;
+
+  if (phase === "idle") {
+    body = (
+      <>
+        <h1 className={H1}>
+          65,536 GPUs.
+          <br />
+          One model.
+          <br />
+          <span className="text-silica/35">Two continents.</span>
+        </h1>
+        <p className={LINE}>Synced every 45 ms over undersea fibre.</p>
+
+        <div className="gap-section">
+          <Eyebrow>Input</Eyebrow>
+          <div className="mt-2">
+            <CablePicker value={st.selectedCable} onChange={(id) => st.set({ selectedCable: id })} />
+          </div>
+          <CableCard id={st.selectedCable} />
+        </div>
+        <Primary tone="crimson" onClick={cut}>
+          Cut {target?.name ?? "a cable"}
+        </Primary>
+      </>
+    );
+  } else if (phase === "cut" && inc) {
+    body = s.stalls ? (
+      <>
+        <Eyebrow tone="text-crimson/70">Input</Eyebrow>
+        <div className="mt-2 font-sans text-[17px] text-crimson">{inc.cable_name} is cut.</div>
+        <div className="display-money mt-3 font-sans font-semibold tracking-[-0.05em] text-crimson">
+          <Roll text={money(s.lossUsd)} />
+        </div>
+        <p className={LINE}>{s.gpus.toLocaleString()} GPUs frozen.</p>
+        <Memory history={inc.blast_radius?.history} cable={inc.cable_name} />
+        <Primary tone="amber" onClick={fix}>
+          Let FalkorDB fix it
+        </Primary>
+        <AgentPicker />
+      </>
+    ) : (
+      <>
+        <Eyebrow tone="text-crimson/70">Input</Eyebrow>
+        <div className="mt-2 font-sans text-[17px] text-crimson">{inc.cable_name} is cut.</div>
+        <h1 className={`mt-3 ${H1}`}>No GPUs frozen.</h1>
+        <p className={LINE}>
+          {inc.blast_radius?.affected_tunnels?.length
+            ? "Backup traffic needs a new path."
+            : (() => {
+                const meta = st.catalog.find((c) => c.id === inc.cable_id);
+                if (meta?.isolates.length) return `But it isolates stations in ${meta.isolates.join(", ")}.`;
+                if (meta?.atlantic_loss_tbps) return `But it removes ${Math.round(meta.atlantic_loss_tbps)} Tbps of transatlantic capacity.`;
+                return "None of our workloads depend on it.";
+              })()}
+        </p>
+        {inc.blast_radius?.affected_tunnels?.length ? (
+          <>
+            <Primary tone="amber" onClick={fix}>
+              Let FalkorDB reroute it
+            </Primary>
+            <AgentPicker />
+          </>
+        ) : (
+          tryAnother
+        )}
+      </>
+    );
+  } else if (phase === "thinking") {
+    const next = TOOL_ORDER.findIndex((t) => !s.byStep(t));
+    body = (
+      <>
+        <Eyebrow tone="text-phosphor/70">FalkorDB</Eyebrow>
+        <div className="mt-2 font-sans text-[17px] text-phosphor">
+          {st.agentMode === "llm" ? `${prettyModel(st.health?.llm_model)} is choosing the queries.` : "Working on it."}
+        </div>
+        <h1 className={`mt-3 min-h-[2.1em] ${H1}`}>{QUESTIONS[next === -1 ? 3 : next]}</h1>
+        <Reasoning s={s} />
+      </>
+    );
+  } else if (phase === "fixed" && result) {
+    const crossing = result.detour?.hops.find((h) => h.medium === "SUBSEA");
+    const delta = result.latency_delta_ms ?? 0;
+    const saved = s.stalls ? (s.legacySeconds - s.agentSeconds) * s.ratePerSec : 0;
+    const faster =
+      report && Math.round(report.sqlite.runs[report.sqlite.runs.length - 1].wall_ms.p50 / report.falkordb.detour_search.engine_ms.p50);
+    const stats: [string, string][] = [
+      s.stalls ? [(result.restored_gpus ?? s.gpus).toLocaleString(), "GPUs back"] : [`${result.spectrum_tbps} Tbps`, "rerouted"],
+      s.stalls ? [money(saved, 0), "saved vs manual, est."] : [`${result.detour_latency_ms?.toFixed(1)} ms`, "new latency"],
+      [faster ? `${faster.toLocaleString()}x` : "4", faster ? "faster than SQL" : "queries"],
+    ];
+    body = (
+      <>
+        <Eyebrow tone="text-amber-laser/70">Output</Eyebrow>
+        <div className="mt-2 font-sans text-[17px] text-amber-laser">{s.stalls ? "Training is back." : "Traffic rerouted."}</div>
+        <h1 className={`mt-3 ${H1}`}>
+          Fixed in <span className="text-amber-laser">{duration(result.agent_wall_ms)}.</span>
+        </h1>
+        {crossing && (
+          <p className={LINE}>
+            Now on {s.cableName(crossing.cable)}, {delta <= 0 ? `${Math.abs(delta).toFixed(1)} ms faster` : `+${delta.toFixed(1)} ms`}.
+            {result.mode === "llm" && (
+              <span className="text-silica/35">
+                {" "}Decided by {prettyModel(st.health?.llm_model)}; FalkorDB did the work in {Math.round(result.graph_engine_ms)} ms.
+              </span>
+            )}
+          </p>
+        )}
+        <div className="gap-section flex gap-14">
+          {stats.map(([v, k]) => (
+            <div key={k}>
+              <div className="font-sans text-[30px] font-semibold tracking-[-0.03em] text-silica">{v}</div>
+              <div className="mt-1 font-sans text-[13px] text-silica/40">{k}</div>
+            </div>
+          ))}
+        </div>
+        {tryAnother}
+      </>
+    );
+  } else if (phase === "failed") {
+    body = (
+      <>
+        <div className="font-sans text-[17px] text-crimson">No safe detour.</div>
+        <h1 className={`mt-3 ${H1}`}>Nothing fits the budget.</h1>
+        {tryAnother}
+      </>
+    );
+  }
+
+  return (
+    <div className="absolute bottom-[clamp(150px,22vh,200px)] left-[64px] top-[clamp(96px,13vh,120px)] z-20 flex w-[520px] flex-col justify-center">
+      <div key={phase} className="chapter-in">
+        {body}
+      </div>
+      {st.notice && <div className="mt-4 font-mono text-[11px] text-crimson">{st.notice}</div>}
+    </div>
+  );
+}
