@@ -1,0 +1,13 @@
+{
+  "generated_at": "2026-10-16T17:36:45Z",
+  "source": "TeleGeography Submarine Cable Map (submarinecablemap.com), CC BY-NC-SA 3.0",
+  "tau_ms_per_km": 0.004897388045699269,
+  "counts": {
+    "stations": 1790,
+    "cables": 603,
+    "spans_directed": 8900,
+    "subsea_spans_directed": 4304,
+    "backhaul_spans_directed": 4596,
+    "planned_cables_skipped": 105
+  }
+}
