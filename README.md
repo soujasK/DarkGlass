@@ -30,6 +30,12 @@ when FalkorDB actually runs it, with real call counts taken from query telemetry
 
 ## Why FalkorDB is the core of this
 
+> **Why it has to be a graph.** "Who is hurt" is one 11-hop path across four layers, from the seabed
+> through the cable, tunnel and switch fabric down to the GPU and its job: a single Cypher pattern,
+> or 11 joins in SQL. "Where do we move it" is worse. The safest detour has no fixed depth, so SQL
+> needs a recursive search: it takes 1,770 ms when capped at 12 hops, misses the best route below 8,
+> and does not finish in 10 s without a cap. FalkorDB's `algo.SPpaths` answers in 0.8 ms.
+
 | FalkorDB capability | What it does here |
 |---|---|
 | Multi-hop Cypher traversal | "Who is hurt?": one 11-hop path from landing station to cable, tunnel, border router, super-spine, spine, leaf, server, NIC, GPU, sync ring and job, plus a sweep that locates every affected GPU to its server, rack, hall and campus (32,768 GPUs for Dunant in about 0.15 s) |
@@ -114,6 +120,26 @@ restoring about 1,200 low-capacity links, takes about 50 ms.
 Planet scan: 603 failures in about 15 s on the development machine. Each scan runs roughly 600 WCC
 calls, 300 max-flow runs, 1,800 mutations and 3,000 index lookups.
 
+### Ask the graph: eval
+
+**23 of 23 questions answered correctly, on each of 3 runs (69/69), by Gemini 4 Argon.** Run it with
+`python -m app.services.ask_eval` (results in `data/benchmarks/ask_eval.json`).
+
+The 23 questions in `backend/app/services/ask_eval.py` are hand-written and cover lookups (4),
+aggregates (6), multi-hop traversals up to 7 hops (9), scan results and incident memory (3), and one
+`algo.SPpaths` question. Each has a hand-written reference Cypher, so the expected answer is computed
+from the live graph, not typed in. An answer passes only if it matches:
+
+- **number**: the first row holds the expected value (1% tolerance for decimals);
+- **set**: every expected item is present, and nothing from a "must not appear" query is. "Which jobs
+  depend on Dunant" fails if it simply lists every job;
+- **top**: the first row is the expected item (either one, when two are tied).
+
+The model is not deterministic, so every question runs 3 times. One earlier run scored 21 of 23. One
+miss was a dropped connection to Vertex (now retried once and counted separately). The other was a
+real miss: asked "how many racks are in the Ashburn campus data halls?", the model returned a count
+per hall instead of the total. That question is kept as written.
+
 ## Run it
 
 Prerequisites: Docker, Python 3.11+, Node 20+.
@@ -140,7 +166,7 @@ option.
 
 ```bash
 cd backend
-pytest -q              # 28 unit and end-to-end tests, about 20 s
+pytest -q              # 120 unit, scenario and end-to-end tests, about 2 minutes
 pytest -q -m slow      # also the full 603-cable planet scan
 ```
 
@@ -153,6 +179,12 @@ The tests cover:
 - incident memory
 - the cable catalog
 - the 11-hop traversal and GPU impact counts
+- hand-picked failure scenarios (`tests/test_scenarios.py`): a cable carrying every traffic class,
+  shared-trench siblings, checkpoint-only and backup-only cuts, a second cut on the detour itself,
+  cuts in either order, impossible constraints, all-or-nothing reservation, and simultaneous cuts and
+  fixes. After every scenario the graph is checked for leftover masks, negative capacity and orphaned
+  tunnels
+- the Ask-the-graph eval's reference answers and scorer
 
 **Manual setup**: `docker compose up -d`; then, in `backend/`, create a venv and
 `pip install -r requirements.txt`, run `python -m app.ingestion.fetch_telegeography` and
@@ -177,6 +209,11 @@ There are two ways to run the agent:
   operator summary.
 
 Claude (Anthropic API or Vertex) is also supported in `mcp_server/agent_runner.py`.
+
+The agent moves the most critical traffic class the cut hurt (gradient sync, then checkpoints, then
+backup). When one cut hits several classes, it does not claim more than it did: the result lists
+every tunnel still on the cut cable as `still_down`, the screen says so, and the incident stays
+marked degraded.
 
 ```json
 { "mcpServers": { "darkglass": { "command": "<repo>/backend/.venv/Scripts/python",
