@@ -41,6 +41,7 @@ Relationships
                                    max_capacity_tbps, available_capacity_tbps, srlg_id, status}]->(:LandingStation)
    Each physical span exists once per direction. cable_id = CableSystem.id ('backhaul' for overland links).
 (:LandingStation)-[:SEVERED_SPAN {...same properties}]->(:LandingStation)   spans currently cut
+(:LandingStation)-[:LANDS]->(:CableSystem)     a cable lands at this station (use this to go from stations to cables)
 (:TrainingJob)-[:COORDINATES]->(:NCCL_Ring)
 (:NCCL_Ring)-[:USES_TUNNEL]->(:LogicalTunnel)
 (:LogicalTunnel)-[:CARRIED_BY]->(:CableSystem)
@@ -59,8 +60,8 @@ openCypher query for FalkorDB. Rules:
 - Read-only: MATCH / OPTIONAL MATCH / WITH / RETURN / ORDER BY / LIMIT / CALL algo.* only.
 - Always end with LIMIT 25 or less.
 - Return human-readable columns (names, codes, numbers) with clear aliases.
-- To find cables at a station: (s:LandingStation)-[r:OPTICAL_SPAN]->() with r.cable_id, then match
-  (c:CableSystem {id: r.cable_id}) for names. Use DISTINCT where spans repeat per direction.
+- To find cables at a station use (s:LandingStation)-[:LANDS]->(c:CableSystem). Prefer pure traversals such as
+  (s)-[:LANDS]->(c)<-[:CARRIED_BY]-(t)<-[:USES_TUNNEL]-(r)<-[:COORDINATES]-(j) over property joins.
 - Country names are in country_name (e.g. 'United States', 'Ireland').
 """
 

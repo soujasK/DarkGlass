@@ -628,6 +628,18 @@ INDEXES = [
 ]
 
 
+# Physical-to-logical bridge as a real relationship, so station -> cable -> tunnel -> ring -> job
+# is one pure graph traversal (no property joins).
+LANDS_EDGES = """
+MATCH (a:LandingStation)-[r:OPTICAL_SPAN|SEVERED_SPAN]->()
+WHERE r.medium = 'SUBSEA'
+WITH DISTINCT a, r.cable_id AS cid
+MATCH (c:CableSystem {id: cid})
+MERGE (a)-[:LANDS]->(c)
+RETURN count(*) AS n
+"""
+
+
 def _chunks(seq: list, n: int):
     for i in range(0, len(seq), n):
         yield seq[i:i + n]
@@ -675,6 +687,8 @@ def load_into_falkordb(topo: dict[str, Any], graph_name: str | None = None) -> d
             SET s = r.props
         """, {"rows": [{"src": sp["src"], "dst": sp["dst"], "props": {k: sp[k] for k in span_props}}
                        for sp in batch]}, graph=g)
+
+    run(LANDS_EDGES, graph=g)
 
     counts = run("""
         MATCH (n:LandingStation) WITH count(n) AS stations

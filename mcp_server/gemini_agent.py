@@ -1,95 +1,28 @@
-"""Gemini on Vertex AI as the DarkGlass agent's reasoning model.
+"""Gemini on Vertex AI as the DarkGlass agent's reasoning model, choosing tools over MCP.
 
-Gemini decides which FalkorDB tools to call and with what arguments; this module runs
-an explicit function-calling loop so every call streams to the UI as it happens.
+The agent does not import the tools. It starts the DarkGlass FastMCP server
+(`python -m mcp_server.server`) over stdio, discovers the tools with MCP `list_tools`,
+hands their schemas to Gemini, and executes whatever Gemini selects with MCP `call_tool`.
+Every call streams to the UI as it happens.
+
 Credentials: Google Application Default Credentials (`gcloud auth application-default login`),
 with the configured project attached as the quota project.
 """
 
 from __future__ import annotations
 
+import asyncio
 import json
+import sys
 import time
+from pathlib import Path
 from typing import Any, Awaitable, Callable
 
 from app.core.config import get_settings
-from mcp_server.tools import (
-    audit_secondary_choke_points,
-    compute_optimal_optical_detour,
-    execute_spectrum_reallocation,
-    trace_severed_blast_radius,
-)
 
 Emit = Callable[[str, dict[str, Any]], Awaitable[None]]
 MAX_TURNS = 12
-
-TOOLS: dict[str, tuple[Callable[..., dict], str, dict[str, Any]]] = {
-    "trace_severed_blast_radius": (
-        trace_severed_blast_radius,
-        "Trace a severed subsea cable up through LogicalTunnels and NCCL rings to the affected training "
-        "jobs. Returns affected jobs, GRADIENT_SYNC/other tunnels with src_gateway, dst_gateway and "
-        "baseline_latency_ms, and the compromised SRLG (srlg_violation_id).",
-        {
-            "type": "object",
-            "properties": {"cable_id": {"type": "string", "description": "Cable system id, e.g. 'dunant'."}},
-            "required": ["cable_id"],
-        },
-    ),
-    "compute_optimal_optical_detour": (
-        compute_optimal_optical_detour,
-        "SRLG-isolated, capacity- and latency-bounded shortest optical paths via FalkorDB algo.SPpaths. "
-        "Returns path_found, hop_sequence, total_latency_ms and ranked candidates with their hops.",
-        {
-            "type": "object",
-            "properties": {
-                "src_station_code": {"type": "string", "description": "Origin gateway code, e.g. 'IAD'."},
-                "dst_station_code": {"type": "string", "description": "Destination gateway code, e.g. 'DUB'."},
-                "required_bandwidth_tbps": {"type": "number", "description": "Free spectrum needed per hop, Tbps."},
-                "max_latency_ceiling_ms": {"type": "number", "description": "Max one-way latency, ms."},
-                "excluded_srlg_id": {"type": "string", "description": "SRLG whose spans must not be used."},
-            },
-            "required": ["src_station_code", "dst_station_code", "required_bandwidth_tbps",
-                         "max_latency_ceiling_ms", "excluded_srlg_id"],
-        },
-    ),
-    "audit_secondary_choke_points": (
-        audit_secondary_choke_points,
-        "Betweenness centrality (FalkorDB algo.betweenness) of candidate detour stations on the surviving "
-        "graph. Flags ELEVATED (>= p95) and CRITICAL (>= p99) stations.",
-        {
-            "type": "object",
-            "properties": {
-                "station_codes": {"type": "array", "items": {"type": "string"},
-                                  "description": "Intermediate station codes of the candidate paths."},
-            },
-            "required": ["station_codes"],
-        },
-    ),
-    "execute_spectrum_reallocation": (
-        execute_spectrum_reallocation,
-        "Atomically reserve spectrum on every hop of the chosen path, demote bulk traffic, rebind the "
-        "tunnels onto the new route and emit a simulated ROADM configuration.",
-        {
-            "type": "object",
-            "properties": {
-                "hop_sequence": {
-                    "type": "array",
-                    "description": "Ordered hops of the chosen candidate.",
-                    "items": {
-                        "type": "object",
-                        "properties": {"from": {"type": "string"}, "to": {"type": "string"},
-                                       "cable": {"type": "string"}},
-                        "required": ["from", "to", "cable"],
-                    },
-                },
-                "spectrum_slice_tbps": {"type": "number"},
-                "traffic_class": {"type": "string", "description": "e.g. GRADIENT_SYNC"},
-                "tunnel_ids": {"type": "array", "items": {"type": "string"}},
-            },
-            "required": ["hop_sequence", "spectrum_slice_tbps", "traffic_class", "tunnel_ids"],
-        },
-    ),
-}
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _client():
@@ -110,65 +43,93 @@ def _slim(result: dict[str, Any]) -> dict[str, Any]:
     return json.loads(json.dumps({k: v for k, v in result.items() if k not in drop}, default=str))
 
 
-async def run_gemini(cable_id: str, emit: Emit, system_prompt: str) -> dict[str, Any]:
-    import asyncio
+def _mcp_result(res: Any) -> dict[str, Any]:
+    """Decode an MCP CallToolResult into the tool's dict."""
+    text = "".join(getattr(c, "text", "") for c in (res.content or []))
+    if getattr(res, "isError", False):
+        return {"error": text or "tool error"}
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        return {"error": f"non-JSON tool result: {text[:200]}"}
+    return data.get("result", data) if isinstance(data, dict) and set(data) == {"result"} else data
 
+
+def _count_in_engine_bar(result: dict[str, Any]) -> None:
+    """The tools ran inside the MCP server process; credit their FalkorDB queries to the live engine bar."""
+    from app.core.telemetry import telemetry
+
+    for t in result.get("cypher_trace", []) or []:
+        telemetry.record(t.get("cypher", ""), float(t.get("engine_ms") or 0.0), int(t.get("rows") or 0))
+
+
+async def run_gemini(cable_id: str, emit: Emit, system_prompt: str) -> dict[str, Any]:
     from google.genai import types
+    from mcp import ClientSession
+    from mcp.client.stdio import StdioServerParameters, stdio_client
 
     s = get_settings()
     started = time.perf_counter()
     steps: list[dict[str, Any]] = []
-    # Announce first: credential discovery is blocking I/O and must not stall the event loop.
-    await emit("agent.start", {"mode": "llm", "cable_id": cable_id, "model": s.gemini_model, "provider": "gemini"})
+    # Announce first: credential discovery and server start-up must not leave the UI waiting.
+    await emit("agent.start", {"mode": "llm", "cable_id": cable_id, "model": s.gemini_model, "provider": "gemini",
+                               "transport": "mcp"})
     client = await asyncio.to_thread(_client)
 
-    tool = types.Tool(function_declarations=[
-        types.FunctionDeclaration(name=name, description=desc, parameters_json_schema=schema)
-        for name, (_, desc, schema) in TOOLS.items()
-    ])
-    config = types.GenerateContentConfig(
-        system_instruction=system_prompt,
-        tools=[tool],
-        automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
-    )
-    contents: list[Any] = [types.Content(role="user", parts=[types.Part.from_text(
-        text=f"ALERT: anchor drag reported on cable '{cable_id}'. Gradient sync between US-East-Ashburn "
-             "and EU-West-Dublin has stalled. Restore it.")])]
-
+    params = StdioServerParameters(command=sys.executable, args=["-m", "mcp_server.server"], cwd=str(REPO_ROOT))
     summary = ""
-    for _ in range(MAX_TURNS):
-        response = await client.aio.models.generate_content(model=s.gemini_model, contents=contents, config=config)
-        candidate = response.candidates[0] if response.candidates else None
-        if candidate is None or candidate.content is None:
-            summary = "Model returned no content."
-            break
-        contents.append(candidate.content)  # keep thought signatures intact for the next turn
-        text = "".join(p.text for p in candidate.content.parts or [] if getattr(p, "text", None) and not p.thought)
-        if text.strip():
-            await emit("agent.thought", {"text": text.strip()})
-        calls = response.function_calls or []
-        if not calls:
-            summary = text.strip()
-            break
-        replies = []
-        for call in calls:
-            fn = TOOLS.get(call.name, (None,))[0]
-            args = dict(call.args or {})
-            if fn is None:
-                replies.append(types.Part.from_function_response(name=call.name, response={"error": "unknown tool"}))
-                continue
-            n = len(steps) + 1
-            await emit("agent.tool_call", {"step": n, "tool": call.name, "arguments": args})
-            t0 = time.perf_counter()
-            try:
-                result = await asyncio.to_thread(fn, **args)
-            except Exception as exc:  # report bad arguments back to the model instead of failing the run
-                result = {"error": f"{type(exc).__name__}: {exc}"}
-            await emit("agent.tool_result", {"step": n, "tool": call.name, "result": result,
-                                             "tool_wall_ms": round((time.perf_counter() - t0) * 1000, 3)})
-            steps.append({"tool": call.name, "result": result})
-            replies.append(types.Part.from_function_response(name=call.name, response=_slim(result)))
-        contents.append(types.Content(role="tool", parts=replies))
+    async with stdio_client(params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            listed = (await session.list_tools()).tools
+            await emit("agent.mcp", {"server": "darkglass", "tools": [t.name for t in listed]})
+
+            tool = types.Tool(function_declarations=[
+                types.FunctionDeclaration(name=t.name, description=t.description or "",
+                                          parameters_json_schema=t.inputSchema)
+                for t in listed
+            ])
+            config = types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                tools=[tool],
+                automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
+            )
+            contents: list[Any] = [types.Content(role="user", parts=[types.Part.from_text(
+                text=f"ALERT: anchor drag reported on cable '{cable_id}'. Gradient sync between US-East-Ashburn "
+                     "and EU-West-Dublin has stalled. Restore it.")])]
+
+            for _ in range(MAX_TURNS):
+                response = await client.aio.models.generate_content(model=s.gemini_model, contents=contents,
+                                                                    config=config)
+                candidate = response.candidates[0] if response.candidates else None
+                if candidate is None or candidate.content is None:
+                    summary = "Model returned no content."
+                    break
+                contents.append(candidate.content)  # keep thought signatures intact for the next turn
+                text = "".join(p.text for p in candidate.content.parts or []
+                               if getattr(p, "text", None) and not p.thought)
+                if text.strip():
+                    await emit("agent.thought", {"text": text.strip()})
+                calls = response.function_calls or []
+                if not calls:
+                    summary = text.strip()
+                    break
+                replies = []
+                for call in calls:
+                    args = dict(call.args or {})
+                    n = len(steps) + 1
+                    await emit("agent.tool_call", {"step": n, "tool": call.name, "arguments": args, "via": "mcp"})
+                    t0 = time.perf_counter()
+                    try:
+                        result = _mcp_result(await session.call_tool(call.name, args))
+                    except Exception as exc:  # report bad arguments back to the model instead of failing the run
+                        result = {"error": f"{type(exc).__name__}: {exc}"}
+                    _count_in_engine_bar(result)
+                    await emit("agent.tool_result", {"step": n, "tool": call.name, "result": result, "via": "mcp",
+                                                     "tool_wall_ms": round((time.perf_counter() - t0) * 1000, 3)})
+                    steps.append({"tool": call.name, "result": result})
+                    replies.append(types.Part.from_function_response(name=call.name, response=_slim(result)))
+                contents.append(types.Content(role="tool", parts=replies))
 
     detour = next((x["result"] for x in reversed(steps) if x["tool"] == "compute_optimal_optical_detour"), None)
     realloc = next((x["result"] for x in reversed(steps) if x["tool"] == "execute_spectrum_reallocation"), None)
@@ -180,11 +141,14 @@ async def run_gemini(cable_id: str, emit: Emit, system_prompt: str) -> dict[str,
         chosen = next((c for c in detour["candidates"] if [h["span_id"] for h in c["hops"]] == applied), None)
     tunnels = blast.get("affected_tunnels", [])
     base = tunnels[0]["baseline_latency_ms"] if tunnels else None
-    moved = [t for t in tunnels if t["tunnel_id"] in {r["tunnel_id"] for r in (realloc or {}).get("rebound_tunnels", [])}]
+    rebound = {r["tunnel_id"] for r in (realloc or {}).get("rebound_tunnels", [])}
+    moved = [t for t in tunnels if t["tunnel_id"] in rebound]
     riders = {j for t in moved for j in t.get("jobs", [])}
+    route_ms = (realloc or {}).get("route_latency_ms")
     result = {
         "restored": restored,
         "mode": "llm",
+        "transport": "mcp",
         "model": s.gemini_model,
         "reason": None if restored else "the model did not complete a reallocation",
         "summary": summary,
@@ -195,8 +159,9 @@ async def run_gemini(cable_id: str, emit: Emit, system_prompt: str) -> dict[str,
         "restored_gpus": sum(j["gpu_count"] for j in blast.get("affected_jobs", []) if j["job_id"] in riders),
         "spectrum_tbps": (realloc or {}).get("roadm_configuration_payload", {}).get("slice_tbps"),
         "baseline_latency_ms": base,
-        "detour_latency_ms": realloc["route_latency_ms"] if realloc and "route_latency_ms" in realloc else None,
-        "latency_delta_ms": round(realloc["route_latency_ms"] - base, 4) if realloc and base and "route_latency_ms" in realloc else None,
+        "detour_latency_ms": route_ms,
+        "latency_delta_ms": round(route_ms - base, 4) if route_ms is not None and base else None,
+        "ceiling_ms": (detour or {}).get("constraints", {}).get("max_latency_ceiling_ms"),
         "jitter_budget_ms": min((j["max_jitter_ms"] for j in blast.get("affected_jobs", [])), default=None),
         "advisories": [],
         "graph_engine_ms": round(sum(x["result"].get("engine_ms", 0.0) for x in steps), 4),

@@ -78,13 +78,35 @@ function Memory({ history, cable }: { history: any; cable: string }) {
   );
 }
 
+/** Why this route: the decision explained with what the graph returned at each step. */
+function why(s: Story): string | null {
+  const blast = s.byStep(TOOL_ORDER[0]);
+  const detour = s.byStep(TOOL_ORDER[1]);
+  const audit = s.byStep(TOOL_ORDER[2]);
+  const r = s.result;
+  if (!r?.detour || !detour) return null;
+  const parts: string[] = [];
+  const sib: string[] = blast?.srlg_exposure?.cable_names ?? [];
+  if (sib.length) parts.push(`${sib.join(", ")} ${sib.length === 1 ? "shares" : "share"} the damaged trench`);
+  const full = detour.masked_spans?.capacity;
+  if (full) parts.push(`${full.toLocaleString()} links were too full`);
+  if (r.detour_latency_ms != null && r.ceiling_ms != null)
+    parts.push(`${r.detour_latency_ms.toFixed(1)} ms fits the ${r.ceiling_ms.toFixed(1)} ms limit`);
+  if (audit?.highest_centrality_station)
+    parts.push(`the busiest relay (${placeName(audit.highest_centrality_station, s.byCode)}) is ${audit.risk_assessment === "CRITICAL" ? "a bottleneck" : "within limits"}`);
+  if (!parts.length) return null;
+  const last = parts.pop();
+  return `Why this route: ${parts.length ? `${parts.join(", ")}, and ${last}` : last}.`;
+}
+
 /** One-line answer per question; the full result is a click away in the drawer. */
 function answer(i: number, s: Story): string {
   const r = s.byStep(TOOL_ORDER[i]);
   if (!r) return "";
   switch (i) {
     case 0:
-      return r.affected_jobs?.[0] ? `${s.gpus.toLocaleString()} GPUs on ${r.affected_rings?.length ?? 0} rings` : "No job affected";
+      if (!r.affected_jobs?.[0]) return "No job affected";
+      return `${r.traversal?.hops ?? 3}-hop walk, ${s.gpus.toLocaleString()} GPUs`;
     case 1: {
       const x = (r.hops ?? []).find((h: any) => h.medium === "SUBSEA");
       return r.path_found && x ? `${s.cableName(x.cable)}, ${r.total_latency_ms?.toFixed(1)} ms` : "None in budget";
@@ -266,7 +288,7 @@ export default function Chapter() {
       <>
         <Eyebrow tone="text-phosphor/70">FalkorDB</Eyebrow>
         <div className="mt-2 font-sans text-[17px] text-phosphor">
-          {st.agentMode === "llm" ? `${prettyModel(st.health?.llm_model)} is choosing the queries.` : "Working on it."}
+          {st.agentMode === "llm" ? `${prettyModel(st.health?.llm_model)} is choosing tools over MCP.` : "Working on it."}
         </div>
         <h1 className={`mt-3 min-h-[2.1em] ${H1}`}>{QUESTIONS[next === -1 ? 3 : next]}</h1>
         <Reasoning s={s} />
@@ -295,11 +317,12 @@ export default function Chapter() {
             Now on {s.cableName(crossing.cable)}, {delta <= 0 ? `${Math.abs(delta).toFixed(1)} ms faster` : `+${delta.toFixed(1)} ms`}.
             {result.mode === "llm" && (
               <span className="text-silica/35">
-                {" "}Decided by {prettyModel(st.health?.llm_model)}; FalkorDB did the work in {Math.round(result.graph_engine_ms)} ms.
+                {" "}Decided by {prettyModel(st.health?.llm_model)} over MCP; FalkorDB did the work in {Math.round(result.graph_engine_ms)} ms.
               </span>
             )}
           </p>
         )}
+        {why(s) && <p className="mt-3 max-w-[480px] font-sans text-[14px] leading-[21px] text-silica/45">{why(s)}</p>}
         <div className="gap-section flex gap-14">
           {stats.map(([v, k]) => (
             <div key={k}>

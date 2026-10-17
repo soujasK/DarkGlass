@@ -67,6 +67,13 @@ def _ensure_ready() -> dict[str, Any]:
     except Exception:
         pass  # already exists
 
+    lands = run("MATCH ()-[l:LANDS]->() RETURN count(l) AS n", read_only=True).rows[0]["n"]
+    if lands == 0:
+        from app.ingestion.import_telegeography import LANDS_EDGES
+
+        run(LANDS_EDGES)
+        report["lands_edges"] = True
+
     jobs = run("MATCH (j:TrainingJob) RETURN count(j) AS n", read_only=True).rows[0]["n"]
     if jobs == 0:
         from app.ingestion.seed_l7_clusters import seed

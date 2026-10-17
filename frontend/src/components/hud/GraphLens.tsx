@@ -60,6 +60,7 @@ export default function GraphLens() {
   const applied = phase === "fixed";
 
   const blast = inc?.blast_radius;
+  const traversal = s.byStep(TOOL_ORDER[0])?.traversal ?? null;
   const job = blast?.affected_jobs?.[0];
   const tunnel = blast?.affected_tunnels?.[0];
   const ringCount = Math.max(1, Math.min(8, blast?.affected_rings?.length ?? 8));
@@ -93,6 +94,27 @@ export default function GraphLens() {
   return (
     <div className="chapter-in-late pointer-events-none absolute bottom-[clamp(130px,19vh,170px)] right-[48px] z-20 w-[clamp(460px,36vw,580px)]">
       <div className="absolute -inset-x-16 -inset-y-12 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(2,6,15,0.92)_30%,rgba(2,6,15,0)_70%)]" />
+      {traced && traversal && (
+        <div className="chapter-in mb-4 pl-[52px]">
+          <div className="font-mono text-[11px] uppercase tracking-[0.22em] text-phosphor">
+            {traversal.hops}-hop traversal in FalkorDB / {traversal.engine_ms.toFixed(1)} ms
+          </div>
+          <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 font-mono text-[11px]">
+            {traversal.nodes.map((n: string, i: number) => (
+              <span key={i} className="flex items-baseline gap-2">
+                {i > 0 && (
+                  <span className="text-silica/35">
+                    {i === 1 ? `-${traversal.rels[0]}->` : `<-${traversal.rels[i - 1]}-`}
+                  </span>
+                )}
+                <span className={i === 1 ? "text-crimson" : i === traversal.nodes.length - 1 ? "text-silica" : "text-silica/75"}>
+                  {String(n).replace(" MoE pretrain", "")}
+                </span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full overflow-visible font-mono">
 
         {/* edges: job - rings - tunnel */}

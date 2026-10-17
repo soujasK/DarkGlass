@@ -178,3 +178,39 @@ def test_incident_memory_is_written_and_recalled(client):
     hist = after["incident"]["blast_radius"]["history"]
     assert hist["failures"] == n0 + 1
     assert hist["last"]["via"], "the cable that saved the day is remembered"
+
+
+def test_blast_radius_is_a_pure_four_hop_traversal(client):
+    """Track 01 'multi-hop reasoning': station -[:LANDS]-> cable <-[:CARRIED_BY]- tunnel <- ring <- job."""
+    snap = client.post("/api/chaos/anchor-drag", json={"cable_id": "dunant"}).json()
+    t = snap["incident"]["blast_radius"]["traversal"]
+    assert t["hops"] == 4
+    assert t["rels"] == ["LANDS", "CARRIED_BY", "USES_TUNNEL", "COORDINATES"]
+    assert t["nodes"][1] == "Dunant"
+
+
+def test_tools_are_discoverable_and_callable_over_mcp():
+    """Track 01 'tool selection through MCP': the agent's tools come from the FastMCP server."""
+    import asyncio
+    import sys
+
+    import mcp_server  # noqa: F401
+    from mcp import ClientSession
+    from mcp.client.stdio import StdioServerParameters, stdio_client
+
+    from app import REPO_ROOT
+    from mcp_server.gemini_agent import _mcp_result
+
+    async def go():
+        params = StdioServerParameters(command=sys.executable, args=["-m", "mcp_server.server"], cwd=str(REPO_ROOT))
+        async with stdio_client(params) as (r, w):
+            async with ClientSession(r, w) as s:
+                await s.initialize()
+                names = {t.name for t in (await s.list_tools()).tools}
+                res = _mcp_result(await s.call_tool("trace_severed_blast_radius", {"cable_id": "marea"}))
+                return names, res
+
+    names, res = asyncio.run(go())
+    assert names == {"trace_severed_blast_radius", "compute_optimal_optical_detour",
+                     "audit_secondary_choke_points", "execute_spectrum_reallocation"}
+    assert res["cable_name"] == "MAREA" and res["cypher_trace"]

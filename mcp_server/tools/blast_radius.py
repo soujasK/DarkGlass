@@ -51,6 +51,16 @@ RETURN DISTINCT cs.id AS exposed_cable, cs.name AS exposed_cable_name, job.id AS
 """
 
 
+# The full cross-layer chain as one pure traversal: landing station -> cable -> tunnel -> ring -> job.
+PATH = """
+MATCH p = (s:LandingStation)-[:LANDS]->(c:CableSystem {id: $cable_id})<-[:CARRIED_BY]-(t:LogicalTunnel)
+          <-[:USES_TUNNEL]-(r:NCCL_Ring)<-[:COORDINATES]-(j:TrainingJob)
+WITH p, j ORDER BY j.priority LIMIT 1
+RETURN length(p) AS hops,
+       [n IN nodes(p) | coalesce(n.code, n.name, n.id)] AS nodes,
+       [x IN relationships(p) | type(x)] AS rels
+"""
+
 HISTORY = """
 MATCH (i:Incident)-[:SEVERED]->(:CableSystem {id: $cable_id})
 OPTIONAL MATCH (i)-[:REROUTED_VIA]->(v:CableSystem)
@@ -109,6 +119,14 @@ def trace_severed_blast_radius(cable_id: str) -> dict[str, Any]:
         traces.append(exposure.trace("srlg_exposure"))
         exposure_rows = exposure.rows
 
+    walk = run(PATH, {"cable_id": cable_id}, read_only=True)
+    traces.append(walk.trace("multi_hop_path"))
+    traversal = None
+    if walk.rows:
+        w = walk.rows[0]
+        traversal = {"hops": w["hops"], "nodes": w["nodes"], "rels": w["rels"],
+                     "engine_ms": round(walk.engine_ms, 3)}
+
     hist = run(HISTORY, {"cable_id": cable_id}, read_only=True)
     traces.append(hist.trace("incident_memory"))
     history = hist.rows[0] if hist.rows else {"failures": 0, "last": None}
@@ -133,6 +151,7 @@ def trace_severed_blast_radius(cable_id: str) -> dict[str, Any]:
             "rings": sorted({r["ring_id"] for r in exposure_rows}),
             "tunnels": sorted({r["tunnel_id"] for r in exposure_rows}),
         },
+        "traversal": traversal,
         "history": {"failures": history["failures"], "last": history["last"] if history["failures"] else None},
         "cypher_trace": traces,
         **summarize_timing(traces),
