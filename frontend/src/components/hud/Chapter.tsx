@@ -166,7 +166,6 @@ export default function Chapter() {
   const s = useStory();
   const st = useMeshStore();
   const { phase, inc, result } = s;
-  const report = st.benchmark;
 
   const guard = async (fn: () => Promise<void>) => {
     try {
@@ -300,12 +299,18 @@ export default function Chapter() {
     const crossing = result.detour?.hops.find((h) => h.medium === "SUBSEA");
     const delta = result.latency_delta_ms ?? 0;
     const saved = s.stalls ? (s.legacySeconds - s.agentSeconds) * s.ratePerSec : 0;
-    const faster =
-      report && Math.round(report.sqlite.runs[report.sqlite.runs.length - 1].wall_ms.p50 / report.falkordb.detour_search.engine_ms.p50);
+    // This very cut, measured live in FalkorDB, SQL and NetworkX (see Proof).
+    const live = st.proof.report?.cable_id === inc?.cable_id ? st.proof.report : null;
+    const measuring = !live && st.proof.running && st.proof.cableId === inc?.cable_id;
+    const vsSql: [string, string] = live
+      ? [`${live.speedup.vs_sqlite_is_lower_bound ? ">" : ""}${Math.round(live.speedup.vs_sqlite).toLocaleString()}x`, "faster than SQL, this cut"]
+      : measuring
+        ? ["â€”", "vs SQL, measuring now"]
+        : ["4", "graph queries"];
     const stats: [string, string][] = [
       s.stalls ? [(result.restored_gpus ?? s.gpus).toLocaleString(), "GPUs back"] : [`${result.spectrum_tbps} Tbps`, "rerouted"],
       s.stalls ? [money(saved, 0), "saved vs manual, est."] : [`${result.detour_latency_ms?.toFixed(1)} ms`, "new latency"],
-      [faster ? `${faster.toLocaleString()}x` : "4", faster ? "faster than SQL" : "queries"],
+      vsSql,
     ];
     body = (
       <>

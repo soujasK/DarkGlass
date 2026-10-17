@@ -1,4 +1,4 @@
-import type { BenchmarkReport, CableMeta, FaultCable, Health, Snapshot, Tunnel } from "./types";
+import type { BenchmarkReport, CableMeta, FaultCable, Health, LiveProof, Snapshot, Tunnel } from "./types";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8010";
 
@@ -37,6 +37,12 @@ export const api = {
   reset: () => request<Snapshot>("/api/reset", { method: "POST" }),
   benchmark: () =>
     request<{ running: boolean; error: string | null; report: BenchmarkReport | null }>("/api/benchmark"),
+  proof: () =>
+    request<{ running: boolean; cable_id: string | null; stage: string | null; error: string | null; report: LiveProof | null }>(
+      "/api/proof/live",
+    ),
+  runProof: (cable_id?: string) =>
+    request<{ accepted: boolean; cable_id: string }>("/api/proof/live", { method: "POST", body: JSON.stringify({ cable_id }) }),
   runBenchmark: (quick = true) =>
     request<{ accepted: boolean }>("/api/benchmark/run", { method: "POST", body: JSON.stringify({ quick }) }),
 };

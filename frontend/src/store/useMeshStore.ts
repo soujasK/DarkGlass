@@ -11,6 +11,7 @@ import type {
   Snapshot,
   SpanGeometry,
   Station,
+  ProofState,
   Tunnel,
 } from "@/lib/types";
 
@@ -120,6 +121,7 @@ type MeshState = {
   selectedTrace: { step: number; index: number } | null;
   benchmark: BenchmarkReport | null;
   benchmarkRunning: boolean;
+  proof: ProofState;
   notice: string | null;
 
   set: (partial: Partial<MeshState>) => void;
@@ -164,6 +166,7 @@ export const useMeshStore = create<MeshState>((set, get) => ({
   selectedTrace: null,
   benchmark: null,
   benchmarkRunning: false,
+  proof: { running: false, stage: null, cableId: null, report: null, error: null },
   notice: null,
 
   set: (partial) => set(partial),

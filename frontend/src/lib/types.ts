@@ -186,3 +186,34 @@ export type CableMeta = {
   countries: string[];
   traffic: string[];
 };
+
+export type ProofEngine = "falkordb" | "sqlite" | "networkx";
+export type ProofImpact = { gpus: number; servers: number; racks: number; halls: number; campuses: string[]; rings: number; hops: number };
+export type LiveProof = {
+  cable_id: string;
+  cable_name: string;
+  generated_at: string;
+  duration_s: number;
+  runs: Record<ProofEngine, number>;
+  snapshot: { copy_ms: number; severed_spans: number; export_ms: number; edges: number };
+  parity: Record<ProofEngine, string> & { verified: boolean };
+  questions: {
+    hurt: { label: string; answer: Record<ProofEngine, ProofImpact>; agree: { sqlite: boolean | null; networkx: boolean | null } };
+    detour: {
+      label: string;
+      inputs: { src: string; dst: string; srlg: string; req: number; ceiling: number; source: string };
+      answer: { falkordb: number | null; sqlite: number | null; networkx: number | null; hops: number };
+      agree: { sqlite: boolean | null; networkx: boolean | null };
+    };
+  };
+  engines: {
+    falkordb: { hurt_ms: number; detour_ms: number; total_ms: number; hurt_engine_ms: number; detour_engine_ms: number };
+    networkx: { hurt_ms: number; detour_ms: number; total_ms: number };
+    sqlite: {
+      hurt_ms: number; detour_ms: number; total_ms: number; timed_out: boolean; hurt_timed_out: boolean;
+      detour_timed_out: boolean; detour_hinted_ms: number | null; detour_hinted_hops: number | null;
+    };
+  };
+  speedup: { vs_sqlite: number; vs_sqlite_is_lower_bound: boolean; sql_timeout_s: number; vs_networkx: number };
+};
+export type ProofState = { running: boolean; stage: string | null; cableId: string | null; report: LiveProof | null; error: string | null };

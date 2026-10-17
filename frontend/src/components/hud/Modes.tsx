@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { api } from "@/lib/api";
 import { useMeshStore, type ScanCard } from "@/store/useMeshStore";
+import CablePicker from "./CablePicker";
 
 function Kicker({ children, tone = "text-muted" }: { children: ReactNode; tone?: string }) {
   return <div className={`font-mono text-[11px] uppercase tracking-[0.22em] ${tone}`}>{children}</div>;
@@ -250,74 +251,144 @@ export function AskPanel() {
 const LOG_MIN = 0.1;
 const LOG_MAX = 10_000;
 const pct = (ms: number) =>
-  Math.max(1.5, (100 * (Math.log10(Math.max(ms, LOG_MIN)) - Math.log10(LOG_MIN))) / (Math.log10(LOG_MAX) - Math.log10(LOG_MIN)));
-const fmt = (ms: number) => (ms >= 100 ? `${Math.round(ms).toLocaleString()} ms` : `${ms.toFixed(ms < 10 ? 2 : 1)} ms`);
+  Math.max(1.5, Math.min(100, (100 * (Math.log10(Math.max(ms, LOG_MIN)) - Math.log10(LOG_MIN))) / (Math.log10(LOG_MAX) - Math.log10(LOG_MIN))));
+const fmt = (ms: number) => (ms >= 1000 ? `${(ms / 1000).toFixed(1)} s` : ms >= 100 ? `${Math.round(ms)} ms` : `${ms.toFixed(ms < 10 ? 2 : 1)} ms`);
+
+const STAGES: [string, string][] = [
+  ["snapshot", "GRAPH.COPY and cut"],
+  ["falkordb", "FalkorDB"],
+  ["export", "Same snapshot out"],
+  ["sqlite", "SQL"],
+  ["networkx", "NetworkX"],
+];
+
+type Row = { k: string; ms: number; hero?: boolean; timeout?: boolean; agree?: boolean | null };
+
+function Bars({ title, rows, answer, note }: { title: string; rows: Row[]; answer: string; note?: string }) {
+  return (
+    <div>
+      <div className="font-sans text-[13px] text-silica/40">{title}</div>
+      {rows.map((row) => (
+        <div key={row.k} className="mt-3">
+          <div className="flex justify-between font-sans text-[13px] tabular-nums">
+            <span className={row.hero ? "text-phosphor" : "text-silica/60"}>{row.k}</span>
+            <span className={row.hero ? "text-phosphor" : row.timeout ? "text-crimson/80" : "text-silica/80"}>
+              {row.timeout ? `> ${fmt(row.ms)}, gave up` : fmt(row.ms)}
+              {row.agree === false && <span className="text-crimson"> / different answer</span>}
+            </span>
+          </div>
+          <div className="mt-1.5 h-[3px] rounded-full bg-white/[0.05]">
+            <div
+              className={`h-full rounded-full ${row.hero ? "bg-phosphor shadow-[0_0_12px_rgba(56,189,248,0.7)]" : row.timeout ? "bg-crimson/50" : "bg-[#475569]"}`}
+              style={{ width: `${pct(row.ms)}%` }}
+            />
+          </div>
+        </div>
+      ))}
+      <div className="mt-4 font-sans text-[13px] text-silica/75">{answer}</div>
+      {note && <div className="mt-1 font-sans text-[12px] leading-[18px] text-silica/35">{note}</div>}
+    </div>
+  );
+}
 
 export function ProofPanel() {
   const st = useMeshStore();
-  const r = st.benchmark;
+  const { proof } = st;
+  const r = proof.report;
+  const incCable = st.snapshot?.incident?.cable_id ?? null;
+
+  const start = async (id?: string) => {
+    st.set({ notice: null, proof: { ...proof, running: true, stage: "snapshot", cableId: id ?? incCable, error: null } });
+    try {
+      await api.runProof(id);
+    } catch (e) {
+      st.set({ notice: (e as Error).message, proof: { ...useMeshStore.getState().proof, running: false, stage: null } });
+    }
+  };
+
+  const picker = (
+    <div className="mt-8 w-[420px]">
+      <CablePicker value={null} label={r ? "Prove it on another cable" : "Pick a cable to prove it on"} onChange={(id) => start(id)} />
+    </div>
+  );
+
+  if (proof.running) {
+    const at = STAGES.findIndex(([k]) => k === proof.stage);
+    const name = st.catalog.find((c) => c.id === proof.cableId)?.name ?? proof.cableId;
+    return (
+      <Shell wide>
+        <Kicker tone="text-phosphor/70">Proof, live</Kicker>
+        <H1>
+          {name} cut.
+          <br />
+          <span className="text-silica/40">Measuring.</span>
+        </H1>
+        <ol className="mt-8 space-y-2 font-mono text-[12px] uppercase tracking-[0.16em]">
+          {STAGES.map(([k, label], i) => (
+            <li key={k} className={i < at ? "text-silica/45" : i === at ? "text-phosphor" : "text-silica/20"}>
+              {label}
+            </li>
+          ))}
+        </ol>
+      </Shell>
+    );
+  }
+
   if (!r) {
     return (
       <Shell>
         <Kicker>Proof</Kicker>
         <H1>Why a graph database.</H1>
-        <Lead>No benchmark on this machine yet.</Lead>
-        <Action onClick={() => api.runBenchmark(true).then(() => st.set({ benchmarkRunning: true }))} disabled={st.benchmarkRunning}>
-          {st.benchmarkRunning ? "Running" : "Run the benchmark"}
-        </Action>
+        <Lead>Pick any cable. FalkorDB cuts it in a sandbox copy, then SQL and NetworkX answer the agent&apos;s questions on the same snapshot.</Lead>
+        {incCable ? <Action onClick={() => start()}>Prove it on this cut</Action> : picker}
       </Shell>
     );
   }
-  const sql = r.sqlite.runs[r.sqlite.runs.length - 1];
-  const x = Math.round(sql.wall_ms.p50 / r.falkordb.detour_search.engine_ms.p50);
-  const groups = [
-    {
-      title: "Safest detour",
-      rows: [
-        { k: "FalkorDB", v: r.falkordb.detour_search.engine_ms.p50, hero: true },
-        { k: "NetworkX", v: r.networkx.detour_search.wall_ms.p50 },
-        { k: "SQL", v: sql.wall_ms.p50 },
-      ],
-    },
-    {
-      title: "Bottleneck audit",
-      rows: [
-        { k: "FalkorDB", v: r.falkordb.centrality_sampled.engine_ms.p50, hero: true },
-        { k: "NetworkX", v: r.networkx.centrality_sampled.wall_ms.p50 },
-      ],
-    },
+
+  const e = r.engines;
+  const q = r.questions;
+  const imp = q.hurt.answer.falkordb;
+  const lower = r.speedup.vs_sqlite_is_lower_bound;
+  const hurtRows: Row[] = [
+    { k: "FalkorDB", ms: e.falkordb.hurt_ms, hero: true },
+    { k: "NetworkX", ms: e.networkx.hurt_ms, agree: q.hurt.agree.networkx },
+    { k: "SQL", ms: e.sqlite.hurt_ms, timeout: e.sqlite.hurt_timed_out, agree: q.hurt.agree.sqlite },
   ];
+  const detourRows: Row[] = [
+    { k: "FalkorDB", ms: e.falkordb.detour_ms, hero: true },
+    { k: "NetworkX", ms: e.networkx.detour_ms, agree: q.detour.agree.networkx },
+    { k: "SQL", ms: e.sqlite.detour_ms, timeout: e.sqlite.detour_timed_out, agree: q.detour.agree.sqlite },
+  ];
+  const route = q.detour.answer.falkordb;
+  const hinted = e.sqlite.detour_hinted_ms;
   return (
     <Shell wide>
+      <Kicker tone="text-phosphor/70">Proof, live on {r.cable_name}</Kicker>
       <H1>
-        <span className="text-phosphor">{x.toLocaleString()}x</span> faster
+        <span className="text-phosphor">{lower ? ">" : ""}{Math.round(r.speedup.vs_sqlite).toLocaleString()}x</span> faster
         <br />
         <span className="text-silica/40">than SQL.</span>
       </H1>
       <div className="mt-8 grid max-w-[600px] grid-cols-2 gap-10">
-      {groups.map((g) => (
-        <div key={g.title}>
-          <div className="font-sans text-[13px] text-silica/40">{g.title}</div>
-          {g.rows.map((row) => (
-            <div key={row.k} className="mt-3">
-              <div className="flex justify-between font-sans text-[13px]">
-                <span className={row.hero ? "text-phosphor" : "text-silica/60"}>{row.k}</span>
-                <span className={row.hero ? "text-phosphor" : "text-silica/80"}>{fmt(row.v)}</span>
-              </div>
-              <div className="mt-1.5 h-[3px] rounded-full bg-white/[0.05]">
-                <div
-                  className={`h-full rounded-full ${row.hero ? "bg-phosphor shadow-[0_0_12px_rgba(56,189,248,0.7)]" : "bg-[#475569]"}`}
-                  style={{ width: `${pct(row.v)}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      ))}
+        <Bars
+          title="Who is hurt"
+          rows={hurtRows}
+          answer={imp.gpus ? `${imp.gpus.toLocaleString()} GPUs, ${imp.racks.toLocaleString()} racks, ${imp.hops} hops` : "No workload on this cable"}
+        />
+        <Bars
+          title="Safest detour"
+          rows={detourRows}
+          answer={route != null ? `${q.detour.inputs.src} to ${q.detour.inputs.dst}, ${route.toFixed(1)} ms, ${q.detour.answer.hops} hops` : "No route in budget"}
+          note={e.sqlite.detour_timed_out && hinted != null
+            ? `SQL cannot know the best route is ${e.sqlite.detour_hinted_hops} hops deep. Told that, it takes ${fmt(hinted)}.`
+            : undefined}
+        />
       </div>
-      <p className="mt-10 font-sans text-[13px] text-silica/35">
-        Same graph in every engine. Same answer. Median of {r.iterations.falkordb_search.toLocaleString()} runs.
+      <p className="mt-8 max-w-[600px] font-sans text-[13px] leading-[20px] text-silica/35">
+        Same snapshot of {r.snapshot.edges.toLocaleString()} edges in all three{r.parity.verified ? `, sha256 ${r.parity.falkordb.slice(0, 8)} verified` : ""}.
+        {" "}Wall-clock, median of {r.runs.falkordb}. Answers match{lower ? " where SQL finished" : ""}.
       </p>
+      {picker}
     </Shell>
   );
 }

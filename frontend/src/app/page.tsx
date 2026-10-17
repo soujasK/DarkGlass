@@ -22,6 +22,12 @@ function useBootstrap() {
   const setSnapshot = useMeshStore((s) => s.setSnapshot);
 
   useEffect(() => {
+    // Deep link to a screen: /#scan, /#ask, /#proof
+    const linked = window.location.hash.slice(1);
+    if (linked === "scan" || linked === "ask" || linked === "proof") set({ mode: linked });
+  }, [set]);
+
+  useEffect(() => {
     Promise.all([
       loadStatic<Station[]>("stations.json"),
       loadStatic<Cable[]>("cables.json"),
@@ -32,14 +38,18 @@ function useBootstrap() {
 
     const refresh = async () => {
       try {
-        const [health, snap, tunnels, bench, faultCables] = await Promise.all([
+        const [health, snap, tunnels, bench, faultCables, proof] = await Promise.all([
           api.health(),
           api.state(),
           api.tunnels(),
           api.benchmark(),
           api.cables(),
+          api.proof(),
         ]);
-        set({ health, tunnels, faultCables, benchmark: bench.report, benchmarkRunning: bench.running });
+        set({
+          health, tunnels, faultCables, benchmark: bench.report, benchmarkRunning: bench.running,
+          proof: { running: proof.running, stage: proof.stage, cableId: proof.cable_id, report: proof.report, error: proof.error },
+        });
         const st = useMeshStore.getState();
         if (!st.engine) {
           const engine = await api.engine();
@@ -114,6 +124,13 @@ function useEventStream() {
           } else if (e.type === "scan.error") {
             set({ scan: { ...cur, running: false }, notice: p.error });
           }
+        } else if (e.type.startsWith("proof.")) {
+          const cur = useMeshStore.getState().proof;
+          const p = e.payload;
+          if (e.type === "proof.started") set({ proof: { ...cur, running: true, stage: "snapshot", cableId: p.cable_id, error: null } });
+          else if (e.type === "proof.progress") set({ proof: { ...cur, running: true, stage: p.stage, cableId: p.cable_id } });
+          else if (e.type === "proof.complete") set({ proof: { running: false, stage: null, cableId: p.report.cable_id, report: p.report, error: null } });
+          else if (e.type === "proof.error") set({ proof: { ...cur, running: false, stage: null, error: p.error } });
         } else if (e.type.startsWith("benchmark.")) {
           if (e.type === "benchmark.started") set({ benchmarkRunning: true });
           else {
