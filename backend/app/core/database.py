@@ -50,6 +50,23 @@ def get_graph(name: str | None = None) -> Graph:
     return get_db().select_graph(name or _graph_override.get() or get_settings().graph_name)
 
 
+def copy_graph(src: str, dst: str, wait_s: float = 30.0) -> None:
+    """GRAPH.COPY, retried while the server is busy forking.
+
+    The copy runs in a forked child, and Redis allows one child at a time: when an automatic
+    background save holds the slot, the copy fails with "could not fork" until the save ends.
+    """
+    deadline = time.monotonic() + wait_s
+    while True:
+        try:
+            get_db().connection.execute_command("GRAPH.COPY", src, dst)
+            return
+        except Exception as exc:
+            if "could not fork" not in str(exc) or time.monotonic() > deadline:
+                raise
+            time.sleep(0.25)
+
+
 @contextmanager
 def use_graph(name: str):
     """Point every run() in this context at another graph, e.g. a GRAPH.COPY sandbox."""

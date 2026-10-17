@@ -36,7 +36,7 @@ from typing import Any, Callable
 import networkx as nx
 
 from app.core.config import get_settings
-from app.core.database import get_db, get_graph, run, use_graph
+from app.core.database import copy_graph, get_graph, run, use_graph
 
 SANDBOX_PREFIX = "darkglass_proof_"
 RUNS = {"falkordb": 5, "networkx": 3, "sqlite": 1}
@@ -103,13 +103,12 @@ def _snapshot(cable_id: str, SANDBOX: str) -> dict[str, Any]:
     from app.services.chaos_engine import RESTORE_CAPACITY, RESTORE_SEVERED, SEVER
     from app.core.telemetry import telemetry
 
-    db = get_db()
     try:
         get_graph(SANDBOX).delete()
     except Exception:
         pass  # no leftover sandbox
     t0 = time.perf_counter()
-    db.connection.execute_command("GRAPH.COPY", get_settings().graph_name, SANDBOX)
+    copy_graph(get_settings().graph_name, SANDBOX)
     copy_ms = (time.perf_counter() - t0) * 1000
     telemetry.record(f"GRAPH.COPY {get_settings().graph_name} {SANDBOX}", copy_ms, 0, kind="copy")
     with use_graph(SANDBOX):

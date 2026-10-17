@@ -25,7 +25,7 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Callable
 
-from app.core.database import get_db, get_graph, run
+from app.core.database import copy_graph, get_db, get_graph, run
 
 WORKERS = 4
 SANDBOX = "darkglass_whatif_{}"
@@ -192,7 +192,6 @@ def _card(r: dict[str, Any]) -> dict[str, Any]:
 def run_scan(progress: Callable[[dict[str, Any]], None] | None = None) -> dict[str, Any]:
     if not _lock.acquire(blocking=False):
         raise ScanBusy("a scan is already running")
-    db = get_db()
     sandboxes = [SANDBOX.format(i) for i in range(WORKERS)]
     started = time.perf_counter()
     try:
@@ -204,7 +203,7 @@ def run_scan(progress: Callable[[dict[str, Any]], None] | None = None) -> dict[s
             except Exception:
                 pass  # did not exist
             tc = time.perf_counter()
-            db.connection.execute_command("GRAPH.COPY", get_graph().name, name)
+            copy_graph(get_graph().name, name)
             from app.core.telemetry import telemetry
 
             telemetry.record(f"GRAPH.COPY {get_graph().name} {name}", (time.perf_counter() - tc) * 1000, 0, kind="copy")

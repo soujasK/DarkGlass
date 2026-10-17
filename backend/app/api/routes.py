@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from typing import Any, Literal
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
@@ -33,7 +34,16 @@ class BenchmarkRunRequest(BaseModel):
     quick: bool = True
 
 
+log = logging.getLogger("darkglass")
 _agent_lock = asyncio.Lock()
+_tasks: set[asyncio.Task] = set()
+
+
+def _background(coro) -> None:
+    """Run a coroutine in the background. The loop only holds tasks weakly, so keep a reference until it ends."""
+    task = asyncio.create_task(coro)
+    _tasks.add(task)
+    task.add_done_callback(_tasks.discard)
 _bench_state: dict[str, Any] = {"running": False, "error": None}
 
 
@@ -196,11 +206,12 @@ def _launch_proof(cable_id: str) -> bool:
             report = await asyncio.to_thread(live_proof.start, cable_id, progress)
             await bus.publish("proof.complete", {"report": report})
         except Exception as exc:
+            log.exception("live proof failed for %s", cable_id)
             await bus.publish("proof.error", {"cable_id": cable_id, "error": str(exc)})
         finally:
             _proof_stage["stage"] = None
 
-    asyncio.create_task(execute())
+    _background(execute())
     return True
 
 
@@ -248,9 +259,10 @@ async def scan_run() -> dict[str, Any]:
         except ScanBusy:
             pass
         except Exception as exc:
+            log.exception("planet scan failed")
             await bus.publish("scan.error", {"error": str(exc)})
 
-    asyncio.create_task(execute())
+    _background(execute())
     return {"accepted": True}
 
 
@@ -300,5 +312,5 @@ async def benchmark_run(req: BenchmarkRunRequest) -> dict[str, Any]:
         finally:
             _bench_state["running"] = False
 
-    asyncio.create_task(execute())
+    _background(execute())
     return {"accepted": True}
