@@ -162,12 +162,67 @@ async def agent_run(req: AgentRunRequest, background: BackgroundTasks) -> dict[s
                 raise
             final = chaos.resolve(result)
             await bus.publish("state", final)
+            if get_settings().auto_proof:
+                _launch_proof(cable_id)  # measure this very cut in all three engines, in the background
             return final
 
     if req.mode == "llm":
         background.add_task(execute)
         return {"accepted": True, "mode": "llm"}
     return await execute()
+
+
+class ProofRequest(BaseModel):
+    cable_id: str | None = None
+
+
+_proof_stage: dict[str, Any] = {"stage": None}
+
+
+def _launch_proof(cable_id: str) -> bool:
+    from app.services import live_proof
+
+    if live_proof.state()["running"]:
+        return False
+    loop = asyncio.get_running_loop()
+
+    def progress(stage: str) -> None:
+        _proof_stage["stage"] = stage
+        asyncio.run_coroutine_threadsafe(bus.publish("proof.progress", {"cable_id": cable_id, "stage": stage}), loop)
+
+    async def execute() -> None:
+        await bus.publish("proof.started", {"cable_id": cable_id})
+        try:
+            report = await asyncio.to_thread(live_proof.start, cable_id, progress)
+            await bus.publish("proof.complete", {"report": report})
+        except Exception as exc:
+            await bus.publish("proof.error", {"cable_id": cable_id, "error": str(exc)})
+        finally:
+            _proof_stage["stage"] = None
+
+    asyncio.create_task(execute())
+    return True
+
+
+@router.get("/proof/live")
+def proof_live() -> dict[str, Any]:
+    from app.services import live_proof
+
+    st = live_proof.state()
+    return {"running": st["running"], "cable_id": st["cable_id"], "stage": _proof_stage["stage"],
+            "error": st["error"], "report": live_proof.latest()}
+
+
+@router.post("/proof/live")
+async def proof_live_run(req: ProofRequest) -> dict[str, Any]:
+    """Cut any cable in a GRAPH.COPY sandbox and answer the agent's questions in FalkorDB, SQL and NetworkX."""
+    snap = chaos.snapshot()
+    cable_id = req.cable_id or (snap["incident"] or {}).get("cable_id")
+    if not cable_id:
+        raise HTTPException(status_code=400, detail="pick a cable")
+    if not _launch_proof(cable_id):
+        raise HTTPException(status_code=409, detail="a proof is already running")
+    return {"accepted": True, "cable_id": cable_id}
 
 
 @router.post("/reset")

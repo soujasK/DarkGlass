@@ -230,3 +230,18 @@ def test_tools_are_discoverable_and_callable_over_mcp():
     assert names == {"trace_severed_blast_radius", "compute_optimal_optical_detour",
                      "audit_secondary_choke_points", "execute_spectrum_reallocation"}
     assert res["cable_name"] == "MAREA" and res["cypher_trace"]
+
+
+def test_live_proof_answers_match_on_the_same_snapshot():
+    """Proof is measured on the real input: the chosen cut, in a sandbox, in three engines."""
+    from app.services.live_proof import run_live_proof
+
+    before = run("MATCH ()-[s:SEVERED_SPAN]->() RETURN count(s) AS n", read_only=True).rows[0]["n"]
+    r = run_live_proof("dunant")
+    assert r["parity"]["verified"]
+    assert r["questions"]["hurt"]["answer"]["falkordb"]["hops"] == 11
+    assert r["questions"]["hurt"]["agree"] == {"sqlite": True, "networkx": True}
+    assert r["questions"]["detour"]["agree"]["networkx"] is True
+    assert r["questions"]["detour"]["agree"]["sqlite"] in (True, None)  # None = SQL gave up
+    live = run("MATCH ()-[s:SEVERED_SPAN]->() RETURN count(s) AS n", read_only=True).rows[0]["n"]
+    assert live == before, "the proof never touches the live graph"

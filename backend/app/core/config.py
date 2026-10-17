@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     # Modelled counterfactual for the impact readout: BGP/IGP reconvergence plus manual traffic
     # engineering after a subsea cut. An assumption, labelled as such in the UI.
     legacy_reconvergence_s: float = 180.0
+    auto_proof: bool = True  # after each fix, measure that cut live in FalkorDB, SQL and NetworkX
 
     # Routing
     max_hops: int = 12

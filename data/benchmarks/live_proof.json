@@ -1,0 +1,122 @@
+{
+  "cable_id": "dunant",
+  "cable_name": "Dunant",
+  "generated_at": "2026-10-17T17:44:26Z",
+  "duration_s": 23.0,
+  "runs": {
+    "falkordb": 5,
+    "networkx": 3,
+    "sqlite": 1
+  },
+  "snapshot": {
+    "copy_ms": 1395.4,
+    "severed_spans": 2,
+    "export_ms": 5711.0,
+    "edges": 260800
+  },
+  "parity": {
+    "falkordb": "39c65af83c85b7cf1279f250fd1848b30495c33eea8dc7277c008b85b7130ead",
+    "sqlite": "39c65af83c85b7cf1279f250fd1848b30495c33eea8dc7277c008b85b7130ead",
+    "networkx": "39c65af83c85b7cf1279f250fd1848b30495c33eea8dc7277c008b85b7130ead",
+    "verified": true
+  },
+  "questions": {
+    "hurt": {
+      "label": "Who is hurt",
+      "answer": {
+        "falkordb": {
+          "gpus": 32768,
+          "servers": 4096,
+          "racks": 1024,
+          "halls": 8,
+          "campuses": [
+            "IAD",
+            "DUB"
+          ],
+          "rings": 4,
+          "hops": 11
+        },
+        "sqlite": {
+          "gpus": 32768,
+          "servers": 4096,
+          "racks": 1024,
+          "halls": 8,
+          "campuses": [
+            "DUB",
+            "IAD"
+          ],
+          "rings": 4,
+          "hops": 11
+        },
+        "networkx": {
+          "gpus": 32768,
+          "servers": 4096,
+          "racks": 1024,
+          "halls": 8,
+          "campuses": [
+            "DUB",
+            "IAD"
+          ],
+          "rings": 4,
+          "hops": 11
+        }
+      },
+      "agree": {
+        "sqlite": true,
+        "networkx": true
+      }
+    },
+    "detour": {
+      "label": "Safest detour",
+      "inputs": {
+        "src": "IAD",
+        "dst": "DUB",
+        "srlg": "SRLG-USE-VAB-SHELF",
+        "req": 3.2,
+        "ceiling": 50.0847,
+        "source": "agent"
+      },
+      "answer": {
+        "falkordb": 30.4075,
+        "sqlite": null,
+        "networkx": 30.4075,
+        "falkordb_valid": 30.4075,
+        "hops": 8
+      },
+      "agree": {
+        "sqlite": null,
+        "networkx": true
+      }
+    }
+  },
+  "engines": {
+    "falkordb": {
+      "hurt_ms": 99.064,
+      "detour_ms": 27.199,
+      "hurt_engine_ms": 94.852,
+      "detour_engine_ms": 20.913,
+      "total_ms": 126.263
+    },
+    "networkx": {
+      "hurt_ms": 330.896,
+      "detour_ms": 22.863,
+      "total_ms": 353.759
+    },
+    "sqlite": {
+      "hurt_ms": 180.989,
+      "detour_ms": 10032.839,
+      "hurt_timed_out": false,
+      "detour_timed_out": true,
+      "detour_hinted_ms": 26.97,
+      "detour_hinted_hops": 8,
+      "total_ms": 10213.828,
+      "timed_out": true
+    }
+  },
+  "speedup": {
+    "vs_sqlite": 80.9,
+    "vs_sqlite_is_lower_bound": true,
+    "sql_timeout_s": 10.0,
+    "vs_networkx": 2.8
+  }
+}

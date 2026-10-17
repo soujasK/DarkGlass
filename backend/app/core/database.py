@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import threading
 import time
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -41,8 +43,21 @@ def get_db() -> FalkorDB:
     return _db
 
 
+_graph_override: ContextVar[str | None] = ContextVar("graph_override", default=None)
+
+
 def get_graph(name: str | None = None) -> Graph:
-    return get_db().select_graph(name or get_settings().graph_name)
+    return get_db().select_graph(name or _graph_override.get() or get_settings().graph_name)
+
+
+@contextmanager
+def use_graph(name: str):
+    """Point every run() in this context at another graph, e.g. a GRAPH.COPY sandbox."""
+    token = _graph_override.set(name)
+    try:
+        yield
+    finally:
+        _graph_override.reset(token)
 
 
 @dataclass
