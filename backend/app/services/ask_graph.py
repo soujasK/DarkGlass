@@ -32,6 +32,10 @@ Nodes
 (:LogicalTunnel {id, src_dc, dst_dc, src_gateway, dst_gateway, required_bandwidth_gbps, traffic_class,
                  state, baseline_latency_ms, current_latency_ms, route_codes (list)})
 (:ResilienceScan {id, scenarios, duration_ms, baseline_capacity_tbps})
+Compute fabric (both campuses, campus property 'IAD' or 'DUB'):
+(:BorderRouter {id, campus}) (:SuperSpine {id, campus}) (:Spine {id, campus}) (:Leaf {id, campus})
+(:Server {id, campus, model}) (:NIC {id, campus, model}) (:GPU {id, campus, model, slot})
+(:Rack {id, campus}) (:Row {id, campus}) (:DataHall {id, campus})
 (:Incident {id, kind, started_at, resolved_at (epoch seconds), restored, stall_seconds, loss_usd, agent_mode,
             agent_ms, graph_engine_ms, traffic_class, gpus_restored, latency_delta_ms, job_ids (list)})
    Incident memory: every past outage DarkGlass resolved.
@@ -46,6 +50,9 @@ Relationships
 (:NCCL_Ring)-[:USES_TUNNEL]->(:LogicalTunnel)
 (:LogicalTunnel)-[:CARRIED_BY]->(:CableSystem)
 (:ResilienceScan)-[:RANKED {rank, risk}]->(:CableSystem)
+(:LogicalTunnel)-[:TERMINATES_AT]->(:BorderRouter)-[:FEEDS]->(:SuperSpine)-[:FEEDS]->(:Spine)-[:FEEDS]->(:Leaf)
+   -[:FEEDS]->(:Server)-[:HAS_NIC]->(:NIC)-[:ATTACHED_TO]->(:GPU)-[:MEMBER_OF]->(:NCCL_Ring)
+(:Server)-[:IN_RACK]->(:Rack)-[:IN_ROW]->(:Row)-[:IN_HALL]->(:DataHall)-[:IN_CAMPUS]->(:LandingStation)  campus gateway IAD / DUB
 (:Incident)-[:SEVERED]->(:CableSystem)        the cable that failed
 (:Incident)-[:REROUTED_VIA]->(:CableSystem)   the subsea cable(s) the traffic moved onto
 

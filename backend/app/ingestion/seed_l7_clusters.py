@@ -97,6 +97,26 @@ def pinned_route(cable_id: str) -> dict[str, Any]:
     return best
 
 
+RESTORE_TUNNELS = """
+MATCH (t:LogicalTunnel)
+OPTIONAL MATCH (t)-[c:CARRIED_BY]->(:CableSystem)
+DELETE c
+WITH DISTINCT t
+SET t.state = 'ACTIVE', t.route_codes = t.baseline_route_codes, t.route_span_ids = t.baseline_route_span_ids,
+    t.current_latency_ms = t.baseline_latency_ms
+WITH t
+UNWIND t.baseline_carried_by AS cid
+MATCH (cs:CableSystem {id: cid})
+CREATE (t)-[:CARRIED_BY]->(cs)
+RETURN count(*) AS links
+"""
+
+
+def restore_tunnels() -> int:
+    """Put every tunnel back on its baseline route in place (jobs, rings and the GPU fabric are untouched)."""
+    return run(RESTORE_TUNNELS).rows[0]["links"]
+
+
 def seed() -> dict[str, Any]:
     run("MATCH (n) WHERE n:TrainingJob OR n:NCCL_Ring OR n:LogicalTunnel DETACH DELETE n")
 
@@ -114,6 +134,9 @@ def seed() -> dict[str, Any]:
             "dst_gateway": DST_GATEWAY,
             "route_codes": route["hops"],
             "route_span_ids": route["spans"],
+            "baseline_route_codes": route["hops"],
+            "baseline_route_span_ids": route["spans"],
+            "baseline_carried_by": subsea,
             "baseline_latency_ms": route["latency_ms"],
             "current_latency_ms": route["latency_ms"],
             "state": "ACTIVE",

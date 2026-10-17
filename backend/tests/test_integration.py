@@ -180,13 +180,29 @@ def test_incident_memory_is_written_and_recalled(client):
     assert hist["last"]["via"], "the cable that saved the day is remembered"
 
 
-def test_blast_radius_is_a_pure_four_hop_traversal(client):
-    """Track 01 'multi-hop reasoning': station -[:LANDS]-> cable <-[:CARRIED_BY]- tunnel <- ring <- job."""
+def test_blast_radius_walks_from_cable_to_gpu(client):
+    """Track 01 'multi-hop reasoning': one 11-hop traversal from the landing station down to a GPU and its job."""
     snap = client.post("/api/chaos/anchor-drag", json={"cable_id": "dunant"}).json()
-    t = snap["incident"]["blast_radius"]["traversal"]
-    assert t["hops"] == 4
-    assert t["rels"] == ["LANDS", "CARRIED_BY", "USES_TUNNEL", "COORDINATES"]
+    br = snap["incident"]["blast_radius"]
+    t = br["traversal"]
+    assert t["hops"] == 11
+    assert t["rels"] == ["LANDS", "CARRIED_BY", "TERMINATES_AT", "FEEDS", "FEEDS", "FEEDS", "FEEDS",
+                         "HAS_NIC", "ATTACHED_TO", "MEMBER_OF", "COORDINATES"]
+    assert t["forward"] == [True, False, True, True, True, True, True, True, True, True, False]
     assert t["nodes"][1] == "Dunant"
+    impact = br["impact"]
+    # the GPUs wired to the cut rings; the rest of the job stalls with them at the next all-reduce
+    assert 0 < impact["gpus"] <= sum(j["gpu_count"] for j in br["affected_jobs"])
+    assert impact["rings"] == len(br["affected_rings"])
+    assert impact["servers"] * 8 == impact["gpus"]
+    assert impact["racks"] > 0 and set(impact["campuses"]) == {"IAD", "DUB"}
+
+
+def test_cable_with_no_workload_has_no_gpu_impact(client):
+    snap = client.post("/api/chaos/anchor-drag", json={"cable_id": "kafos"}).json()
+    br = snap["incident"]["blast_radius"]
+    assert br["traversal"] is None
+    assert br["impact"]["gpus"] == 0
 
 
 def test_tools_are_discoverable_and_callable_over_mcp():

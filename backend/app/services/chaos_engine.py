@@ -210,12 +210,12 @@ class ChaosEngine:
             pass
 
     def reset(self) -> dict[str, Any]:
-        from app.ingestion.seed_l7_clusters import seed
+        from app.ingestion.seed_l7_clusters import restore_tunnels
 
         with self._lock:
             restored = run(RESTORE_SEVERED).rows[0]["restored"]
             capacity = run(RESTORE_CAPACITY).rows[0]["restored"]
-            seed()
+            restore_tunnels()
             self.incident = None
             return {"restored_severed_spans": restored, "restored_capacity_spans": capacity, **self.snapshot()}
 

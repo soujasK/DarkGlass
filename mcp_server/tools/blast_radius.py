@@ -51,14 +51,34 @@ RETURN DISTINCT cs.id AS exposed_cable, cs.name AS exposed_cable_name, job.id AS
 """
 
 
-# The full cross-layer chain as one pure traversal: landing station -> cable -> tunnel -> ring -> job.
+# The full cross-layer chain as one pure traversal, from the landing station down to a single GPU:
+# station -> cable -> tunnel -> border router -> super-spine -> spine -> leaf -> server -> NIC -> GPU -> ring -> job
 PATH = """
 MATCH p = (s:LandingStation)-[:LANDS]->(c:CableSystem {id: $cable_id})<-[:CARRIED_BY]-(t:LogicalTunnel)
-          <-[:USES_TUNNEL]-(r:NCCL_Ring)<-[:COORDINATES]-(j:TrainingJob)
-WITH p, j ORDER BY j.priority LIMIT 1
+          -[:TERMINATES_AT]->(:BorderRouter)-[:FEEDS]->(:SuperSpine)-[:FEEDS]->(:Spine)-[:FEEDS]->(:Leaf)
+          -[:FEEDS]->(:Server)-[:HAS_NIC]->(:NIC)-[:ATTACHED_TO]->(:GPU)-[:MEMBER_OF]->(ring:NCCL_Ring)
+          <-[:COORDINATES]-(:TrainingJob)
+WHERE (ring)-[:USES_TUNNEL]->(t)
 RETURN length(p) AS hops,
        [n IN nodes(p) | coalesce(n.code, n.name, n.id)] AS nodes,
-       [x IN relationships(p) | type(x)] AS rels
+       [x IN relationships(p) | type(x)] AS rels,
+       [i IN range(0, length(p) - 1) | startNode(relationships(p)[i]) = nodes(p)[i]] AS forward
+LIMIT 1
+"""
+
+# Every GPU behind the cut, located to its server, rack, hall and campus.
+IMPACT = """
+MATCH (c:CableSystem {id: $cable_id})<-[:CARRIED_BY]-(:LogicalTunnel)<-[:USES_TUNNEL]-(ring:NCCL_Ring)
+WITH DISTINCT ring
+MATCH (ring)<-[:MEMBER_OF]-(g:GPU)<-[:ATTACHED_TO]-(:NIC)<-[:HAS_NIC]-(s:Server)
+WITH count(DISTINCT ring) AS rings, count(g) AS gpus, collect(DISTINCT s) AS servers
+UNWIND servers AS s
+MATCH (s)-[:IN_RACK]->(rk:Rack)
+WITH rings, gpus, size(servers) AS servers, collect(DISTINCT rk) AS racks
+UNWIND racks AS rk
+MATCH (rk)-[:IN_ROW]->(:Row)-[:IN_HALL]->(h:DataHall)-[:IN_CAMPUS]->(dc:LandingStation)
+RETURN gpus, servers, size(racks) AS racks, count(DISTINCT h) AS halls,
+       collect(DISTINCT dc.code) AS campuses, rings
 """
 
 HISTORY = """
@@ -124,8 +144,12 @@ def trace_severed_blast_radius(cable_id: str) -> dict[str, Any]:
     traversal = None
     if walk.rows:
         w = walk.rows[0]
-        traversal = {"hops": w["hops"], "nodes": w["nodes"], "rels": w["rels"],
+        traversal = {"hops": w["hops"], "nodes": w["nodes"], "rels": w["rels"], "forward": w["forward"],
                      "engine_ms": round(walk.engine_ms, 3)}
+    sweep = run(IMPACT, {"cable_id": cable_id}, read_only=True)
+    traces.append(sweep.trace("gpu_impact_sweep"))
+    empty = {"gpus": 0, "servers": 0, "racks": 0, "halls": 0, "campuses": [], "rings": 0}
+    impact = {**(sweep.rows[0] if sweep.rows else empty), "engine_ms": round(sweep.engine_ms, 3)}
 
     hist = run(HISTORY, {"cable_id": cable_id}, read_only=True)
     traces.append(hist.trace("incident_memory"))
@@ -152,6 +176,7 @@ def trace_severed_blast_radius(cable_id: str) -> dict[str, Any]:
             "tunnels": sorted({r["tunnel_id"] for r in exposure_rows}),
         },
         "traversal": traversal,
+        "impact": impact,
         "history": {"failures": history["failures"], "last": history["last"] if history["failures"] else None},
         "cypher_trace": traces,
         **summarize_timing(traces),

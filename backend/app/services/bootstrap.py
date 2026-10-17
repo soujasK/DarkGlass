@@ -75,11 +75,19 @@ def _ensure_ready() -> dict[str, Any]:
         report["lands_edges"] = True
 
     jobs = run("MATCH (j:TrainingJob) RETURN count(j) AS n", read_only=True).rows[0]["n"]
-    if jobs == 0:
+    stale = run("MATCH (t:LogicalTunnel) WHERE t.baseline_carried_by IS NULL RETURN count(t) AS n",
+                read_only=True).rows[0]["n"]
+    if jobs == 0 or stale:
         from app.ingestion.seed_l7_clusters import seed
 
         seed()
         report["seeded"] = True
+
+    from app.ingestion.compute_fabric import ensure_fabric
+
+    fabric = ensure_fabric()
+    if fabric:
+        report["fabric"] = fabric
 
     dirty = run("""
         OPTIONAL MATCH ()-[cut:SEVERED_SPAN]->() WITH count(cut) AS cut

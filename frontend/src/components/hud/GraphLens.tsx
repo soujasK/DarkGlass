@@ -61,6 +61,7 @@ export default function GraphLens() {
 
   const blast = inc?.blast_radius;
   const traversal = s.byStep(TOOL_ORDER[0])?.traversal ?? null;
+  const impact = s.byStep(TOOL_ORDER[0])?.impact ?? null;
   const job = blast?.affected_jobs?.[0];
   const tunnel = blast?.affected_tunnels?.[0];
   const ringCount = Math.max(1, Math.min(8, blast?.affected_rings?.length ?? 8));
@@ -83,7 +84,7 @@ export default function GraphLens() {
   let caption = "Every GPU job is linked to the undersea glass it depends on.";
   if (phase === "cut") caption = noTraffic ? "No tunnel in the graph uses this cable." : "The cut is written to the graph. Nothing upstream knows yet.";
   if (phase === "thinking" && !traced) caption = "Walking up from the cut cable to everything that depends on it.";
-  if (traced && !routed) caption = "One traversal: cable, tunnel, rings, job. The damage is mapped.";
+  if (traced && !routed) caption = "One traversal from the seabed to the GPU. The damage is mapped.";
   if (routed && !applied) caption = `Detour found. ${sibling ?? "The shared-trench cable"} was masked out before the search.`;
   if (audited && !applied) caption = "Every relay station on the detour scored for overload risk.";
   if (applied) caption = "The tunnel's CARRIED_BY edge now points at the new cable.";
@@ -103,8 +104,8 @@ export default function GraphLens() {
             {traversal.nodes.map((n: string, i: number) => (
               <span key={i} className="flex items-baseline gap-2">
                 {i > 0 && (
-                  <span className="text-silica/35">
-                    {i === 1 ? `-${traversal.rels[0]}->` : `<-${traversal.rels[i - 1]}-`}
+                  <span className="text-[9px] text-silica/35">
+                    {(traversal.forward?.[i - 1] ?? i === 1) ? `${traversal.rels[i - 1]}→` : `←${traversal.rels[i - 1]}`}
                   </span>
                 )}
                 <span className={i === 1 ? "text-crimson" : i === traversal.nodes.length - 1 ? "text-silica" : "text-silica/75"}>
@@ -113,6 +114,14 @@ export default function GraphLens() {
               </span>
             ))}
           </div>
+          {impact?.gpus > 0 && (
+            <div className="mt-3 flex gap-5 font-mono text-[11px] text-silica/60">
+              {([[impact.gpus, "GPUs"], [impact.servers, "servers"], [impact.racks, "racks"], [impact.halls, "halls"]] as [number, string][]).map(([n, l]) => (
+                <span key={l}><span className="text-crimson">{n.toLocaleString()}</span> {l}</span>
+              ))}
+              <span>{impact.campuses.join(" + ")}</span>
+            </div>
+          )}
         </div>
       )}
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full overflow-visible font-mono">

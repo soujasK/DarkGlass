@@ -106,7 +106,9 @@ function answer(i: number, s: Story): string {
   switch (i) {
     case 0:
       if (!r.affected_jobs?.[0]) return "No job affected";
-      return `${r.traversal?.hops ?? 3}-hop walk, ${s.gpus.toLocaleString()} GPUs`;
+      return r.impact?.servers
+        ? `${r.traversal?.hops ?? 11} hops to ${r.impact.servers.toLocaleString()} servers`
+        : `${r.traversal?.hops ?? 11}-hop walk, ${s.gpus.toLocaleString()} GPUs`;
     case 1: {
       const x = (r.hops ?? []).find((h: any) => h.medium === "SUBSEA");
       return r.path_found && x ? `${s.cableName(x.cable)}, ${r.total_latency_ms?.toFixed(1)} ms` : "None in budget";
