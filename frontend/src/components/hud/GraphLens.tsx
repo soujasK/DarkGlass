@@ -12,9 +12,9 @@ const CUT = { x: CX, y: 40 };
 const SIB = { x: CX, y: 98 };
 const NEW = { x: CX, y: 156 };
 
-const CYAN = "#38BDF8";
-const AMBER = "#FDE68A";
-const CRIMSON = "#E11D48";
+const CYAN = "#7AA7D9";
+const AMBER = "#E0B156";
+const CRIMSON = "#E5534B";
 const DIM = "#334155";
 
 const CLASS_SHORT: Record<string, string> = {
@@ -93,29 +93,28 @@ export default function GraphLens() {
   if (phase === "idle" || noTraffic) return null;
 
   return (
-    <div className="chapter-in-late pointer-events-none absolute bottom-[clamp(130px,19vh,170px)] right-[48px] z-20 w-[clamp(460px,36vw,580px)]">
-      <div className="absolute -inset-x-16 -inset-y-12 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(2,6,15,0.92)_30%,rgba(2,6,15,0)_70%)]" />
+    <div className="chapter-in-late pointer-events-none absolute bottom-[clamp(56px,8vh,84px)] right-[48px] z-20 w-[clamp(480px,37vw,600px)] rounded-xl border border-white/[0.08] bg-[#070d19]/[0.92] px-5 pb-4 pt-5">
       {traced && traversal && (
-        <div className="chapter-in mb-4 pl-[52px]">
-          <div className="font-mono text-[11px] uppercase tracking-[0.22em] text-phosphor">
-            {traversal.hops}-hop traversal in FalkorDB / {traversal.engine_ms.toFixed(1)} ms
+        <div className="chapter-in mb-4">
+          <div className="font-sans text-[13px] font-medium text-silica/85">
+            {traversal.hops}-hop traversal in FalkorDB <span className="font-normal text-silica/45">· {traversal.engine_ms.toFixed(1)} ms</span>
           </div>
-          <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 font-mono text-[11px]">
+          <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 font-mono text-[12px] leading-[19px]">
             {traversal.nodes.map((n: string, i: number) => (
               <span key={i} className="flex items-baseline gap-2">
                 {i > 0 && (
-                  <span className="text-[9px] text-silica/35">
+                  <span className="text-[10.5px] text-silica/45">
                     {(traversal.forward?.[i - 1] ?? i === 1) ? `${traversal.rels[i - 1]}→` : `←${traversal.rels[i - 1]}`}
                   </span>
                 )}
-                <span className={i === 1 ? "text-crimson" : i === traversal.nodes.length - 1 ? "text-silica" : "text-silica/75"}>
+                <span className={i === 1 ? "text-crimson" : i === traversal.nodes.length - 1 ? "text-silica" : "text-silica/85"}>
                   {String(n).replace(" MoE pretrain", "")}
                 </span>
               </span>
             ))}
           </div>
           {impact?.gpus > 0 && (
-            <div className="mt-3 flex gap-5 font-mono text-[11px] text-silica/60">
+            <div className="mt-3 flex gap-5 font-sans text-[12.5px] text-silica/60">
               {([[impact.gpus, "GPUs"], [impact.servers, "servers"], [impact.racks, "racks"], [impact.halls, "halls"]] as [number, string][]).map(([n, l]) => (
                 <span key={l}><span className="text-crimson">{n.toLocaleString()}</span> {l}</span>
               ))}
@@ -149,8 +148,8 @@ export default function GraphLens() {
 
         {/* job */}
         <circle cx={JOB.x} cy={JOB.y} r={26} fill="#02060F" stroke={nodeStroke} strokeWidth={1.2} className="transition-[stroke] duration-700" />
-        <text x={JOB.x} y={JOB.y + 3} textAnchor="middle" fontSize={11} fill="#F8FAFC">JOB</text>
-        <text x={JOB.x} y={JOB.y + 44} textAnchor="middle" fontSize={12} fill="#F8FAFC">
+        <text x={JOB.x} y={JOB.y + 3} textAnchor="middle" fontSize={11} fill="#E6E8EB">Job</text>
+        <text x={JOB.x} y={JOB.y + 44} textAnchor="middle" fontSize={12} fill="#E6E8EB">
           {(job?.model_name ?? "Llama-4 400B").replace(" MoE pretrain", "")}
         </text>
 
@@ -174,13 +173,13 @@ export default function GraphLens() {
             <line x1={CUT.x + 5} y1={CUT.y - 5} x2={CUT.x - 5} y2={CUT.y + 5} />
           </g>
         )}
-        <text x={CUT.x + 18} y={CUT.y + 3} fontSize={13} fill={inc ? CRIMSON : "#F8FAFC"}>{cutName}</text>
+        <text x={CUT.x + 18} y={CUT.y + 3} fontSize={13} fill={inc ? CRIMSON : "#E6E8EB"}>{cutName}</text>
 
         {/* sibling */}
         {inc && sibling && (
           <g opacity={traced ? 1 : 0} className="transition-opacity duration-700">
             <circle cx={SIB.x} cy={SIB.y} r={7} fill="#02060F" stroke={CRIMSON} strokeWidth={1} strokeDasharray="2 2" />
-            <text x={SIB.x + 18} y={SIB.y + 3} fontSize={13} fill="#F8FAFC">{sibling}</text>
+            <text x={SIB.x + 18} y={SIB.y + 3} fontSize={13} fill="#E6E8EB">{sibling}</text>
           </g>
         )}
 
@@ -195,6 +194,14 @@ export default function GraphLens() {
         )}
 
       </svg>
+      <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 border-t border-white/[0.06] pt-3 font-sans text-[12px] text-silica/55">
+        {([[CYAN, "Live cable or link"], [CRIMSON, "Cut, or in the cut's trench"], [AMBER, "Detour the agent chose"]] as [string, string][]).map(([c, l]) => (
+          <span key={l} className="flex items-center gap-2">
+            <span className="inline-block h-[2px] w-4 rounded" style={{ background: c }} />
+            {l}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }

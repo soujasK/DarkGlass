@@ -48,10 +48,10 @@ export default function FaultMarker() {
   return (
     <group>
       <lineSegments geometry={geom.cross} renderOrder={5}>
-        <lineBasicMaterial color="#E11D48" transparent opacity={0.95} depthWrite={false} />
+        <lineBasicMaterial color="#E5534B" transparent opacity={0.95} depthWrite={false} />
       </lineSegments>
       <lineLoop ref={ring} geometry={geom.ringGeom} position={geom.p} renderOrder={5}>
-        <lineBasicMaterial color="#E11D48" transparent opacity={0.6} depthWrite={false} />
+        <lineBasicMaterial color="#E5534B" transparent opacity={0.6} depthWrite={false} />
       </lineLoop>
     </group>
   );

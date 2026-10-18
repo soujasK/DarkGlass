@@ -92,7 +92,7 @@ export default function DetourSpline() {
           uSpeed: { value: FIBRE_KM_S / TIME_SCALE },
           uReveal: { value: 0 },
           uTotal: { value: 1 },
-          uPearl: { value: new THREE.Color("#FDE68A") },
+          uPearl: { value: new THREE.Color("#E0B156") },
           uAmber: { value: new THREE.Color("#F59E0B") },
         },
       }),

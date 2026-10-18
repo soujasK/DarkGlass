@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect } from "react";
 import { api, loadStatic, wsUrl } from "@/lib/api";
 import type { Cable, SpanGeometry, Station } from "@/lib/types";
-import { useMeshStore, type WsEvent } from "@/store/useMeshStore";
+import { engineBase, useMeshStore, type WsEvent } from "@/store/useMeshStore";
 import CuratorsDrawer from "@/components/hud/CuratorsDrawer";
 import Chapter from "@/components/hud/Chapter";
 import { TopBar } from "@/components/hud/Chrome";
@@ -110,7 +110,9 @@ function useEventStream() {
           // Resolution is applied when the replay reaches agent.complete (see useReplay).
           enqueue(e);
         } else if (e.type === "engine.stats") {
-          set({ engine: e.payload, engineReceivedAt: performance.now() });
+          const st = useMeshStore.getState();
+          set({ engine: e.payload, engineReceivedAt: performance.now(),
+                ...(st.engineBase ? {} : { engineBase: engineBase(e.payload, "since this page opened") }) });
         } else if (e.type.startsWith("scan.")) {
           const cur = useMeshStore.getState().scan;
           const p = e.payload;

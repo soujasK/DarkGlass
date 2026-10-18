@@ -6,7 +6,7 @@ import { useMeshStore, type ScanCard } from "@/store/useMeshStore";
 import CablePicker from "./CablePicker";
 
 function Kicker({ children, tone = "text-muted" }: { children: ReactNode; tone?: string }) {
-  return <div className={`font-mono text-[11px] uppercase tracking-[0.22em] ${tone}`}>{children}</div>;
+  return <div className={`font-sans text-[14px] ${tone}`}>{children}</div>;
 }
 function H1({ children }: { children: ReactNode }) {
   return (
@@ -22,7 +22,7 @@ function Action({ children, onClick, disabled }: { children: ReactNode; onClick:
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="mt-10 inline-flex items-center rounded-full bg-phosphor px-7 py-3.5 font-sans text-[15px] font-medium tracking-tight text-void shadow-[0_0_40px_rgba(56,189,248,0.35)] transition-shadow hover:shadow-[0_0_60px_rgba(56,189,248,0.6)] disabled:opacity-40"
+      className="mt-10 inline-flex items-center rounded-lg bg-phosphor px-6 py-3 font-sans text-[15px] font-medium text-void transition-colors hover:bg-phosphor/85 disabled:opacity-40"
     >
       {children}
     </button>
@@ -31,7 +31,7 @@ function Action({ children, onClick, disabled }: { children: ReactNode; onClick:
 /** Safe area between the top bar and the engine bar; content is centred vertically inside it. */
 function Shell({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
   return (
-    <div className={`chapter-in absolute bottom-[clamp(160px,25vh,230px)] left-[64px] top-[clamp(96px,13vh,120px)] z-20 flex flex-col justify-center ${wide ? "w-[620px]" : "w-[520px]"}`}>
+    <div className={`chapter-in absolute bottom-[clamp(72px,10vh,104px)] left-[64px] top-[clamp(96px,13vh,120px)] z-20 flex flex-col justify-center ${wide ? "w-[620px]" : "w-[520px]"}`}>
       <div>{children}</div>
     </div>
   );
@@ -89,7 +89,7 @@ export function ScanPanel() {
         </div>
         <Lead>cables cut inside FalkorDB.</Lead>
         <div className="mt-6 h-px w-full max-w-[420px] bg-white/[0.08]">
-          <div className="h-px bg-phosphor shadow-[0_0_10px_#38BDF8] transition-[width] duration-300" style={{ width: `${(100 * scan.done) / (scan.total || st.catalog.length)}%` }} />
+          <div className="h-px bg-phosphor transition-[width] duration-300" style={{ width: `${(100 * scan.done) / (scan.total || st.catalog.length)}%` }} />
         </div>
         <div className="mt-3 font-sans text-[13px] tabular-nums text-silica/40">{(scan.elapsedMs / 1000).toFixed(1)} s</div>
       </Shell>
@@ -101,9 +101,9 @@ export function ScanPanel() {
       <>
         <div className="chapter-in absolute left-[64px] top-[clamp(100px,14vh,130px)] z-20 w-[560px]">
           <H1>
-            {s.scenarios} cuts.
+            {s.scenarios} cables cut
             <br />
-            <span className="text-silica/35">{(s.duration_ms / 1000).toFixed(0)} seconds.</span>
+            <span className="text-silica/40">in {(s.duration_ms / 1000).toFixed(0)} s</span>
           </H1>
           <Lead>Every subsea cable on Earth, failed once.</Lead>
           <button type="button" onClick={start} className="mt-6 font-sans text-[14px] text-silica/40 transition-colors hover:text-silica">
@@ -111,7 +111,7 @@ export function ScanPanel() {
           </button>
         </div>
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[56vh] bg-gradient-to-t from-void via-void/95 to-transparent" />
-        <div className="chapter-in-late absolute bottom-[clamp(150px,22vh,200px)] left-[64px] right-[64px] z-20 grid grid-cols-3 gap-12">
+        <div className="chapter-in-late absolute bottom-[clamp(64px,9vh,96px)] left-[64px] right-[64px] z-20 grid grid-cols-3 gap-12">
         <Board
           title="Strands landing stations"
           cards={s.top_planet}
@@ -178,7 +178,7 @@ export function AskPanel() {
   const cols = result?.columns ?? [];
   return (
     <Shell wide>
-      {!result && !loading ? <H1>Ask the graph.</H1> : null}
+      {!result && !loading ? <H1>Ask the graph</H1> : null}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -233,7 +233,7 @@ export function AskPanel() {
               <thead>
                 <tr className="text-muted">
                   {cols.slice(0, 4).map((c) => (
-                    <th key={c} className="pb-1 pr-3 font-mono text-[10px] font-normal uppercase tracking-[0.12em]">{c.replace(/_/g, " ")}</th>
+                    <th key={c} className="pb-1 pr-3 font-sans text-[12px] font-normal">{c.replace(/_/g, " ").replace(/^./, (x) => x.toUpperCase())}</th>
                   ))}
                 </tr>
               </thead>
@@ -289,7 +289,7 @@ function Bars({ title, rows, answer, note }: { title: string; rows: Row[]; answe
           </div>
           <div className="mt-1.5 h-[3px] rounded-full bg-white/[0.05]">
             <div
-              className={`h-full rounded-full ${row.hero ? "bg-phosphor shadow-[0_0_12px_rgba(56,189,248,0.7)]" : row.timeout ? "bg-crimson/50" : "bg-[#475569]"}`}
+              className={`h-full rounded-full ${row.hero ? "bg-phosphor" : row.timeout ? "bg-crimson/50" : "bg-[#475569]"}`}
               style={{ width: `${pct(row.ms)}%` }}
             />
           </div>
@@ -327,13 +327,13 @@ export function ProofPanel() {
     const name = st.catalog.find((c) => c.id === proof.cableId)?.name ?? proof.cableId;
     return (
       <Shell wide>
-        <Kicker tone="text-phosphor/70">Proof, live</Kicker>
+        <Kicker tone="text-silica/60">Live proof</Kicker>
         <H1>
-          {name} cut.
+          Measuring the
           <br />
-          <span className="text-silica/40">Measuring.</span>
+          <span className="text-silica/40">{name} cut</span>
         </H1>
-        <ol className="mt-8 space-y-2 font-mono text-[12px] uppercase tracking-[0.16em]">
+        <ol className="mt-8 space-y-2 font-sans text-[14px]">
           {STAGES.map(([k, label], i) => (
             <li key={k} className={i < at ? "text-silica/45" : i === at ? "text-phosphor" : "text-silica/20"}>
               {label}
@@ -347,8 +347,8 @@ export function ProofPanel() {
   if (!r) {
     return (
       <Shell>
-        <Kicker>Proof</Kicker>
-        <H1>Why a graph database.</H1>
+        <Kicker tone="text-silica/60">Proof</Kicker>
+        <H1>Why a graph database</H1>
         <Lead>Pick any cable. FalkorDB cuts it in a sandbox copy, then SQL and NetworkX answer the agent&apos;s questions on the same snapshot.</Lead>
         {incCable ? <Action onClick={() => start()}>Prove it on this cut</Action> : picker}
       </Shell>
@@ -373,11 +373,11 @@ export function ProofPanel() {
   const hinted = e.sqlite.detour_hinted_ms;
   return (
     <Shell wide>
-      <Kicker tone="text-phosphor/70">Proof, live on {r.cable_name}</Kicker>
+      <Kicker tone="text-silica/60">Live proof on the {r.cable_name} cut</Kicker>
       <H1>
-        <span className="text-phosphor">{lower ? ">" : ""}{Math.round(r.speedup.vs_sqlite).toLocaleString()}x</span> faster
+        {lower ? "Over " : ""}{Math.round(r.speedup.vs_sqlite).toLocaleString()}x faster
         <br />
-        <span className="text-silica/40">than SQL.</span>
+        <span className="text-silica/40">than SQL on this cut</span>
       </H1>
       <div className="mt-8 grid max-w-[600px] grid-cols-2 gap-10">
         <Bars

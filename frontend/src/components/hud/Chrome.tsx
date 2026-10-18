@@ -61,7 +61,7 @@ export function TopBar() {
 
       <div className="flex items-center gap-6 font-sans text-[13px] text-silica/45">
         <span className="flex items-center gap-2">
-          <span className={`h-1.5 w-1.5 rounded-full ${up ? "bg-phosphor shadow-[0_0_10px_#38BDF8]" : "bg-crimson"}`} />
+          <span className={`h-1.5 w-1.5 rounded-full ${up ? "bg-[#34d399]" : "bg-crimson"}`} />
           {up ? "Live" : "Offline"}
         </span>
         <button type="button" onClick={reset} className="transition-colors hover:text-silica">

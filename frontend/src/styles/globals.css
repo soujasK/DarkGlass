@@ -53,7 +53,7 @@ body {
 
 /* Height-responsive type and spacing: full size on tall screens, scaled down on 768-800 px laptops. */
 .display-h1 { font-size: clamp(38px, 6.1vh, 56px); line-height: 1; }
-.display-money { font-size: clamp(64px, 10.5vh, 96px); line-height: 1; }
+.display-money { font-size: clamp(48px, 7.5vh, 72px); line-height: 1; }
 .gap-section { margin-top: clamp(20px, 4.6vh, 48px); }
 .gap-action { margin-top: clamp(16px, 3.8vh, 40px); }
 .gap-line { margin-top: clamp(10px, 2vh, 20px); }

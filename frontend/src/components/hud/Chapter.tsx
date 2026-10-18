@@ -22,21 +22,37 @@ const LINE = "gap-line font-sans text-[17px] leading-[26px] text-silica/55";
 function Primary({ children, onClick, tone }: { children: ReactNode; onClick: () => void; tone: "crimson" | "amber" }) {
   const cls =
     tone === "crimson"
-      ? "bg-crimson text-white shadow-[0_0_40px_rgba(225,29,72,0.35)] hover:shadow-[0_0_60px_rgba(225,29,72,0.55)]"
-      : "bg-amber-laser text-void shadow-[0_0_40px_rgba(253,230,138,0.35)] hover:shadow-[0_0_60px_rgba(253,230,138,0.6)]";
+      ? "bg-crimson text-white hover:bg-crimson/85"
+      : "bg-amber-laser text-void hover:bg-amber-laser/85";
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`gap-action inline-flex items-center rounded-full px-7 py-3.5 font-sans text-[15px] font-medium tracking-tight transition-shadow duration-300 ${cls}`}
+      className={`gap-action inline-flex items-center rounded-lg px-6 py-3 font-sans text-[15px] font-medium transition-colors duration-200 ${cls}`}
     >
       {children}
     </button>
   );
 }
 
-function Eyebrow({ children, tone = "text-silica/60" }: { children: ReactNode; tone?: string }) {
-  return <div className={`font-mono text-[11px] uppercase tracking-[0.24em] ${tone}`}>{children}</div>;
+/** One line of state: a coloured dot and a plain sentence. */
+function Status({ children, dot }: { children: ReactNode; dot: string }) {
+  return (
+    <div className="flex items-center gap-2 font-sans text-[14px] text-silica/70">
+      <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`} />
+      {children}
+    </div>
+  );
+}
+
+/** A labelled fact, for the status panel. */
+function Fact({ k, children }: { k: string; children: ReactNode }) {
+  return (
+    <>
+      <dt className="text-silica/45">{k}</dt>
+      <dd className="text-silica/85">{children}</dd>
+    </>
+  );
 }
 
 /** Who drives the fix: the LLM choosing FalkorDB tools over MCP (default), or the deterministic playbook. */
@@ -268,11 +284,12 @@ export default function Chapter() {
     });
 
   const target = st.catalog.find((c) => c.id === st.selectedCable) ?? st.faultCables.find((c) => c.id === st.selectedCable);
+  const flagship = st.health?.flagship ?? null;
+  const syncTunnels = st.tunnels.filter((t) => t.traffic_class === "GRADIENT_SYNC");
 
   const tryAnother = (
     <div className="gap-section">
-      <Eyebrow>Try another scenario</Eyebrow>
-      <div className="mt-2">
+      <div>
         <CablePicker value={null} exclude={inc?.cable_id} label="Cut a different cable" onChange={(id) => nextScenario(id)} />
       </div>
     </div>
@@ -283,20 +300,22 @@ export default function Chapter() {
   if (phase === "idle") {
     body = (
       <>
-        <h1 className={H1}>
-          {st.health?.flagship ? `${st.health.flagship.gpus.toLocaleString()} GPUs.` : "One AI supercluster."}
-          <br />
-          One model.
-          <br />
-          <span className="text-silica/35">Two continents.</span>
-        </h1>
-        {st.health?.flagship && (
-          <p className={LINE}>Synced every {Math.round(st.health.flagship.sync_ms)} ms over undersea fibre.</p>
-        )}
+        <Status dot="bg-[#34d399]">All training links healthy</Status>
+        <h1 className={`mt-3 ${H1}`}>{flagship?.name ?? "Training job"}</h1>
+        <dl className="mt-6 grid grid-cols-[132px_1fr] gap-x-4 gap-y-2 font-sans text-[15px]">
+          {flagship && <Fact k="GPUs">{flagship.gpus.toLocaleString()} across Ashburn (IAD) and Dublin (DUB)</Fact>}
+          {flagship && <Fact k="Gradient sync">every {Math.round(flagship.sync_ms)} ms, {Math.round(flagship.jitter_ms)} ms jitter budget</Fact>}
+          {syncTunnels.length > 0 && (
+            <Fact k="Sync route">
+              {syncTunnels.length} tunnels, {Math.round(syncTunnels[0].current_latency_ms ?? syncTunnels[0].baseline_latency_ms)} ms one way,
+              over {new Set(syncTunnels.flatMap((t) => t.carried_by)).size} subsea cables
+            </Fact>
+          )}
+        </dl>
+        <p className="mt-3 font-sans text-[13px] text-silica/35">A modelled cluster on the real TeleGeography cable map.</p>
 
         <div className="gap-section">
-          <Eyebrow>Input</Eyebrow>
-          <div className="mt-2">
+          <div>
             <CablePicker value={st.selectedCable} onChange={(id) => st.set({ selectedCable: id })} />
           </div>
           <CableCard id={st.selectedCable} />
@@ -309,9 +328,9 @@ export default function Chapter() {
   } else if (phase === "cut" && inc) {
     body = s.stalls ? (
       <>
-        <Eyebrow tone="text-crimson/70">Input</Eyebrow>
-        <div className="mt-2 font-sans text-[17px] text-crimson">{inc.cable_name} is cut.</div>
-        <div className="display-money mt-3 font-sans font-semibold tracking-[-0.05em] text-crimson">
+        <Status dot="bg-crimson">{inc.cable_name} is cut. Gradient sync has stalled.</Status>
+        <div className="mt-6 font-sans text-[13px] text-silica/45">Estimated cost so far</div>
+        <div className="display-money mt-1 font-sans font-semibold tracking-[-0.04em] text-crimson">
           <Roll text={money(s.lossUsd)} />
         </div>
         <p className={LINE}>
@@ -326,9 +345,8 @@ export default function Chapter() {
       </>
     ) : (
       <>
-        <Eyebrow tone="text-crimson/70">Input</Eyebrow>
-        <div className="mt-2 font-sans text-[17px] text-crimson">{inc.cable_name} is cut.</div>
-        <h1 className={`mt-3 ${H1}`}>No GPUs frozen.</h1>
+        <Status dot="bg-crimson">{inc.cable_name} is cut.</Status>
+        <h1 className={`mt-3 ${H1}`}>No GPUs frozen</h1>
         <p className={LINE}>
           {inc.blast_radius?.affected_tunnels?.length
             ? `${[...new Set(inc.blast_radius.affected_tunnels.map((t: any) => CLASS_LABEL[t.traffic_class] ?? t.traffic_class))]
@@ -357,10 +375,9 @@ export default function Chapter() {
     const next = TOOL_ORDER.findIndex((t) => !s.byStep(t));
     body = (
       <>
-        <Eyebrow tone="text-phosphor/70">FalkorDB</Eyebrow>
-        <div className="mt-2 font-sans text-[17px] text-phosphor">
-          {st.agentMode === "llm" ? `${prettyModel(st.health?.llm_model)} is choosing tools over MCP.` : "Working on it."}
-        </div>
+        <Status dot="bg-phosphor animate-pulse">
+          {st.agentMode === "llm" ? `${prettyModel(st.health?.llm_model)} is choosing tools over MCP` : "The playbook is running the four tools"}
+        </Status>
         <h1 className={`mt-3 min-h-[2.1em] ${H1}`}>{QUESTIONS[next === -1 ? 3 : next]}</h1>
         <Reasoning s={s} />
       </>
@@ -368,7 +385,6 @@ export default function Chapter() {
   } else if (phase === "fixed" && result) {
     const crossing = result.detour?.hops.find((h) => h.medium === "SUBSEA");
     const delta = result.latency_delta_ms ?? 0;
-    const saved = s.stalls ? (s.legacySeconds - s.agentSeconds) * s.ratePerSec : 0;
     // This very cut, measured live in FalkorDB, SQL and NetworkX (see Proof).
     const live = st.proof.report?.cable_id === inc?.cable_id ? st.proof.report : null;
     const measuring = !live && st.proof.running && st.proof.cableId === inc?.cable_id;
@@ -379,16 +395,13 @@ export default function Chapter() {
         : [String(s.steps.length), s.steps.length === 1 ? "agent tool run" : "agent tools run"];
     const stats: [string, string][] = [
       s.stalls ? [(result.restored_gpus ?? s.gpus).toLocaleString(), "GPUs back"] : [`${result.spectrum_tbps} Tbps`, "rerouted"],
-      s.stalls ? [money(saved, 0), "saved vs manual, est."] : [`${result.detour_latency_ms?.toFixed(1)} ms`, "new latency"],
+      [`${result.detour_latency_ms?.toFixed(1)} ms`, "new route latency"],
       vsSql,
     ];
     body = (
       <>
-        <Eyebrow tone="text-amber-laser/70">Output</Eyebrow>
-        <div className="mt-2 font-sans text-[17px] text-amber-laser">{s.stalls ? "Training is back." : "Traffic rerouted."}</div>
-        <h1 className={`mt-3 ${H1}`}>
-          Fixed in <span className="text-amber-laser">{duration(result.agent_wall_ms)}.</span>
-        </h1>
+        <Status dot="bg-amber-laser">{s.stalls ? "Training restored" : "Traffic rerouted"}</Status>
+        <h1 className={`mt-3 ${H1}`}>Fixed in {duration(result.agent_wall_ms)}</h1>
         {crossing && (
           <p className={LINE}>
             Now on {s.cableName(crossing.cable)}, {delta <= 0 ? `${Math.abs(delta).toFixed(1)} ms faster` : `+${delta.toFixed(1)} ms`}.
@@ -425,7 +438,7 @@ export default function Chapter() {
     body = (
       <>
         <div className="font-sans text-[17px] text-crimson">{noRoute ? "No safe detour." : "Not fixed."}</div>
-        <h1 className={`mt-3 ${H1}`}>{noRoute ? "Nothing fits the budget." : "The agent stopped."}</h1>
+        <h1 className={`mt-3 ${H1}`}>{noRoute ? "Nothing fits the budget" : "The agent stopped"}</h1>
         {reason && <p className={LINE}>{reason.charAt(0).toUpperCase() + reason.slice(1)}.</p>}
         {!noRoute && (
           <>
@@ -441,7 +454,7 @@ export default function Chapter() {
   }
 
   return (
-    <div className="absolute bottom-[clamp(150px,22vh,200px)] left-[64px] top-[clamp(96px,13vh,120px)] z-20 flex w-[520px] flex-col justify-center">
+    <div className="absolute bottom-[clamp(64px,9vh,96px)] left-[64px] top-[clamp(96px,13vh,120px)] z-20 flex w-[520px] flex-col justify-center">
       <div key={phase} className="chapter-in">
         {body}
       </div>

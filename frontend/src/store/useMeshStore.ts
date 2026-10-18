@@ -29,6 +29,14 @@ export type EngineCapability = {
   age_s: number | null;
 };
 
+/** Engine counters at the start of the current scope, so the bar shows this incident's work, not the session's. */
+export type EngineBase = { total: number; by: Record<string, number>; scope: string };
+export const engineBase = (e: EngineSnapshot, scope: string): EngineBase => ({
+  total: e.total_calls,
+  by: Object.fromEntries(e.capabilities.map((c) => [c.key, c.calls])),
+  scope,
+});
+
 export type EngineSnapshot = {
   capabilities: EngineCapability[];
   recent: { kind: string; query: string; engine_ms: number; rows: number; at: number }[];
@@ -113,6 +121,7 @@ type MeshState = {
   mode: Mode;
   engine: EngineSnapshot | null;
   engineReceivedAt: number;
+  engineBase: EngineBase | null;
   scan: { running: boolean; done: number; total: number; elapsedMs: number; heat: Record<string, number>; summary: ScanSummary | null };
   askState: { loading: boolean; result: AskResult | null; error: string | null };
 
@@ -159,6 +168,7 @@ export const useMeshStore = create<MeshState>((set, get) => ({
   mode: "incident",
   engine: null,
   engineReceivedAt: 0,
+  engineBase: null,
   scan: { running: false, done: 0, total: 0, elapsedMs: 0, heat: {}, summary: null },
   askState: { loading: false, result: null, error: null },
 
@@ -180,6 +190,7 @@ export const useMeshStore = create<MeshState>((set, get) => ({
       // A reset or a new cut from anywhere (another tab, the API): the previous run's result no longer applies.
       Object.assign(extra, { steps: [], agentResult: null, thoughts: [], selectedTrace: null });
     }
+    if (changed && st.engine) extra.engineBase = engineBase(st.engine, s.incident ? "this incident" : "since the last reset");
     if (!s.incident) {
       extra.detour = null;
       extra.detourIgnitedAt = null;
