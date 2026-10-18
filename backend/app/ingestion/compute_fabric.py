@@ -139,8 +139,10 @@ def build_fabric() -> dict[str, Any]:
 
     link_tunnels()
     nodes = sum(counts.values())
-    edges = run("""MATCH ()-[r]->() WHERE type(r) IN ['FEEDS','HAS_NIC','ATTACHED_TO','MEMBER_OF','IN_RACK','IN_ROW',
-                   'IN_HALL','IN_CAMPUS','TERMINATES_AT'] RETURN count(r) AS n""", read_only=True).rows[0]["n"]
+    # One typed count per relationship type: a single scan over every edge timed out on a fresh load.
+    edges = sum(run(f"MATCH ()-[r:{t}]->() RETURN count(r) AS n", read_only=True).rows[0]["n"]
+                for t in ("FEEDS", "HAS_NIC", "ATTACHED_TO", "MEMBER_OF", "IN_RACK", "IN_ROW", "IN_HALL",
+                          "IN_CAMPUS", "TERMINATES_AT"))
     return {"nodes": nodes, "edges": edges, "by_label": counts, "seconds": round(time.perf_counter() - t0, 1)}
 
 
