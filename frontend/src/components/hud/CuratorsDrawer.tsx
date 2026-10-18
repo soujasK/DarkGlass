@@ -227,6 +227,7 @@ function BenchmarkBody({
   err: string | null;
 }) {
   const sqlDeep = r.sqlite.runs[r.sqlite.runs.length - 1];
+  const jitterMs = useMeshStore((s) => s.health?.flagship?.jitter_ms ?? null);
   const pctLine = (p: { p50: number; p95: number; p99: number; n: number }) =>
     `p50 ${fmtMs(p.p50)}  p95 ${fmtMs(p.p95)}  p99 ${fmtMs(p.p99)}  n=${p.n}`;
 
@@ -263,11 +264,13 @@ function BenchmarkBody({
       <div>
         <div className="text-muted">SRLG-ISOLATED DETOUR SEARCH, P50, LOG SCALE (MS)</div>
         <div className="relative">
-          <div
-            className="pointer-events-none absolute bottom-0 top-0 w-px bg-amber-laser/50"
-            style={{ left: `calc(188px + (100% - 296px) * ${xPct(12) / 100})` }}
-            title="12 ms collective jitter budget"
-          />
+          {jitterMs != null && (
+            <div
+              className="pointer-events-none absolute bottom-0 top-0 w-px bg-amber-laser/50"
+              style={{ left: `calc(188px + (100% - 296px) * ${xPct(jitterMs) / 100})` }}
+              title={`${jitterMs} ms collective jitter budget`}
+            />
+          )}
           {routing.map((b) => (
             <BarRow key={b.label} bar={b} />
           ))}

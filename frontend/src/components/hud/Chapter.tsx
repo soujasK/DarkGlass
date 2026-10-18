@@ -228,13 +228,15 @@ export default function Chapter() {
     body = (
       <>
         <h1 className={H1}>
-          65,536 GPUs.
+          {st.health?.flagship ? `${st.health.flagship.gpus.toLocaleString()} GPUs.` : "One AI supercluster."}
           <br />
           One model.
           <br />
           <span className="text-silica/35">Two continents.</span>
         </h1>
-        <p className={LINE}>Synced every 45 ms over undersea fibre.</p>
+        {st.health?.flagship && (
+          <p className={LINE}>Synced every {Math.round(st.health.flagship.sync_ms)} ms over undersea fibre.</p>
+        )}
 
         <div className="gap-section">
           <Eyebrow>Input</Eyebrow>
@@ -256,7 +258,10 @@ export default function Chapter() {
         <div className="display-money mt-3 font-sans font-semibold tracking-[-0.05em] text-crimson">
           <Roll text={money(s.lossUsd)} />
         </div>
-        <p className={LINE}>{s.gpus.toLocaleString()} GPUs frozen.</p>
+        <p className={LINE}>
+          {s.gpus.toLocaleString()} GPUs frozen.{" "}
+          <span className="text-silica/35">Cost at an estimated {money(s.ratePerSec * 3600, 0)} an hour.</span>
+        </p>
         <Memory history={inc.blast_radius?.history} cable={inc.cable_name} />
         <Primary tone="amber" onClick={fix}>
           Let FalkorDB fix it

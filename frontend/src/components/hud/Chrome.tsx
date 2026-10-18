@@ -15,8 +15,16 @@ export function TopBar() {
   const up = st.health?.falkordb === "up";
 
   const reset = async () => {
+    let snap;
+    try {
+      snap = await api.reset(); // the server refuses while the agent is still working
+    } catch (e) {
+      st.set({ notice: (e as Error).message });
+      return;
+    }
     st.clearRun();
-    st.setSnapshot(await api.reset());
+    st.set({ notice: null });
+    st.setSnapshot(snap);
     const [tunnels, health, faultCables] = await Promise.all([api.tunnels(), api.health(), api.cables()]);
     st.set({ tunnels, health, faultCables, askState: { loading: false, result: null, error: null } });
   };

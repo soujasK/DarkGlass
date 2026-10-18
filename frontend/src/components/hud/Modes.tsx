@@ -71,7 +71,7 @@ export function ScanPanel() {
   const s = scan.summary;
 
   const start = async () => {
-    st.set({ scan: { ...scan, running: true, done: 0, total: 603, elapsedMs: 0, heat: {}, summary: null } });
+    st.set({ scan: { ...scan, running: true, done: 0, total: st.catalog.length, elapsedMs: 0, heat: {}, summary: null } });
     try {
       await api.runScan();
     } catch (e) {
@@ -85,11 +85,11 @@ export function ScanPanel() {
       <Shell>
         <div className="flex items-baseline gap-3 font-sans font-semibold tracking-[-0.04em]">
           <span className="text-[96px] leading-none text-silica tabular-nums">{scan.done}</span>
-          <span className="text-[32px] text-silica/30">/ {scan.total || 603}</span>
+          <span className="text-[32px] text-silica/30">/ {scan.total || st.catalog.length}</span>
         </div>
         <Lead>cables cut inside FalkorDB.</Lead>
         <div className="mt-6 h-px w-full max-w-[420px] bg-white/[0.08]">
-          <div className="h-px bg-phosphor shadow-[0_0_10px_#38BDF8] transition-[width] duration-300" style={{ width: `${(100 * scan.done) / (scan.total || 603)}%` }} />
+          <div className="h-px bg-phosphor shadow-[0_0_10px_#38BDF8] transition-[width] duration-300" style={{ width: `${(100 * scan.done) / (scan.total || st.catalog.length)}%` }} />
         </div>
         <div className="mt-3 font-sans text-[13px] tabular-nums text-silica/40">{(scan.elapsedMs / 1000).toFixed(1)} s</div>
       </Shell>
@@ -142,13 +142,15 @@ export function ScanPanel() {
         <br />
         on Earth failed?
       </H1>
-      <Lead>FalkorDB cuts all 603, one by one.</Lead>
+      <Lead>FalkorDB cuts all {st.catalog.length ? st.catalog.length.toLocaleString() : "of them"}, one by one.</Lead>
       <Action onClick={start}>Run the planet scan</Action>
     </Shell>
   );
 }
 
 /* ------------------------------------------------------------------ ask the graph */
+
+const SHOWN_ROWS = 6;
 
 const EXAMPLES = [
   "Which training jobs depend on cables landing at Virginia Beach?",
@@ -210,7 +212,10 @@ export function AskPanel() {
         <div className="mt-6">
           <div className="flex gap-6 font-sans text-[13px] tabular-nums">
             <span className="text-phosphor">FalkorDB {result.engine_ms?.toFixed(1)} ms</span>
-            <span className="text-silica/40">{result.row_count} rows</span>
+            <span className="text-silica/40">
+              {result.row_count} {result.row_count === 1 ? "row" : "rows"}
+              {(result.row_count ?? 0) > SHOWN_ROWS ? `, first ${SHOWN_ROWS} shown` : ""}
+            </span>
           </div>
           <pre
             title="scroll for the full query"
@@ -218,6 +223,11 @@ export function AskPanel() {
           >
             {result.cypher}
           </pre>
+          {result.row_count === 0 && (
+            <p className="mt-3 font-sans text-[13px] text-silica/50">
+              Nothing in the graph matches right now. The answer reflects the live graph, including any cut or reroute.
+            </p>
+          )}
           <div className="mt-3 max-h-[150px] overflow-y-auto">
             <table className="w-full text-left font-sans text-[12px]">
               <thead>
@@ -228,7 +238,7 @@ export function AskPanel() {
                 </tr>
               </thead>
               <tbody>
-                {(result.rows ?? []).slice(0, 6).map((r, i) => (
+                {(result.rows ?? []).slice(0, SHOWN_ROWS).map((r, i) => (
                   <tr key={i} className="border-t border-white/[0.05] text-silica/80">
                     {cols.slice(0, 4).map((c) => (
                       <td key={c} className="max-w-[160px] truncate py-1 pr-3">

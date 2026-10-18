@@ -104,6 +104,7 @@ function useEventStream() {
           enqueue(e);
         } else if (e.type === "chaos.severed" || e.type === "reset") {
           setSnapshot(e.payload);
+          set({ notice: null }); // an old error does not belong to the new scenario
           set({ tunnels: await api.tunnels(), health: await api.health() });
         } else if (e.type === "state") {
           // Resolution is applied when the replay reaches agent.complete (see useReplay).

@@ -135,6 +135,7 @@ export type Health = {
   jobs?: number;
   llm_provider?: string;
   llm_model?: string;
+  flagship?: { name: string; gpus: number; sync_ms: number; jitter_ms: number } | null;
 };
 
 type Pct = { n: number; p50: number; p95: number; p99: number; mean: number; min: number; max: number };
