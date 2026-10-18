@@ -113,7 +113,7 @@ function useEventStream() {
         } else if (e.type === "engine.stats") {
           const st = useMeshStore.getState();
           set({ engine: e.payload, engineReceivedAt: performance.now(),
-                ...(st.engineBase ? {} : { engineBase: engineBase(e.payload, "since this page opened") }) });
+                ...(st.engineBase ? {} : { engineBase: engineBase(e.payload, "idle") }) });
         } else if (e.type.startsWith("scan.")) {
           const cur = useMeshStore.getState().scan;
           const p = e.payload;

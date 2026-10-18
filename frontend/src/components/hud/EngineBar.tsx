@@ -33,8 +33,10 @@ export default function EngineBar() {
   const since = receivedAt ? (performance.now() - receivedAt) / 1000 : 0;
   const sessionTotal = engine?.total_calls ?? 0;
   const runTotal = Math.max(0, sessionTotal - (base?.total ?? 0));
-  const scope = base?.scope ?? "this session";
+  const scope = base?.scope ?? "idle";
   const scopeLabel = scope.charAt(0).toUpperCase() + scope.slice(1);
+  // Nothing has been run yet (start screen, or after a reset): show the total only.
+  const idle = scope === "idle";
 
   return (
     <footer className="absolute inset-x-0 bottom-0 z-30 px-16 pb-[clamp(14px,2.6vh,24px)]">
@@ -46,11 +48,13 @@ export default function EngineBar() {
       >
         <span className="font-medium text-ink-1">FalkorDB</span>
         <span className="tabular-nums">{sessionTotal.toLocaleString()} queries in total</span>
-        <span className="h-3 w-px self-center bg-white/15" aria-hidden />
-        <span className="tabular-nums">
-          <span className="font-medium text-ink-1">{scopeLabel}:</span> {runTotal.toLocaleString()}
-        </span>
-        {(engine?.capabilities ?? []).map((c) => {
+        {!idle && <span className="h-3 w-px self-center bg-white/15" aria-hidden />}
+        {!idle && (
+          <span className="tabular-nums">
+            <span className="font-medium text-ink-1">{scopeLabel}:</span> {runTotal.toLocaleString()}
+          </span>
+        )}
+        {!idle && (engine?.capabilities ?? []).map((c) => {
           const n = Math.max(0, c.calls - (base?.by[c.key] ?? 0));
           // Only the work that actually ran; index lookups overlap the other counts, so they are not listed.
           if (!n || c.key === "index") return null;

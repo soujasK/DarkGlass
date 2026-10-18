@@ -190,7 +190,7 @@ export const useMeshStore = create<MeshState>((set, get) => ({
       // A reset or a new cut from anywhere (another tab, the API): the previous run's result no longer applies.
       Object.assign(extra, { steps: [], agentResult: null, thoughts: [], selectedTrace: null });
     }
-    if (changed && st.engine) extra.engineBase = engineBase(st.engine, s.incident ? "this incident" : "since the last reset");
+    if (changed && st.engine) extra.engineBase = engineBase(st.engine, s.incident ? "this incident" : "idle");
     if (!s.incident) {
       extra.detour = null;
       extra.detourIgnitedAt = null;
