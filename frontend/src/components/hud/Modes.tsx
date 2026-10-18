@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { api } from "@/lib/api";
-import { useMeshStore, type ScanCard } from "@/store/useMeshStore";
+import { engineBase, useMeshStore, type ScanCard } from "@/store/useMeshStore";
 import CablePicker from "./CablePicker";
 
 function Kicker({ children, tone = "text-muted" }: { children: ReactNode; tone?: string }) {
@@ -71,7 +71,9 @@ export function ScanPanel() {
   const s = scan.summary;
 
   const start = async () => {
-    st.set({ scan: { ...scan, running: true, done: 0, total: st.catalog.length, elapsedMs: 0, heat: {}, summary: null } });
+    // Count from the click, so the scan's GRAPH.COPY sandboxes are included in "this scan".
+    st.set({ scan: { ...scan, running: true, done: 0, total: st.catalog.length, elapsedMs: 0, heat: {}, summary: null },
+             ...(st.engine ? { engineBase: engineBase(st.engine, "this scan") } : {}) });
     try {
       await api.runScan();
     } catch (e) {
@@ -166,7 +168,8 @@ export function AskPanel() {
   const submit = async (question: string) => {
     if (!question.trim() || loading) return;
     setQ(question);
-    st.set({ askState: { loading: true, result: null, error: null } });
+    st.set({ askState: { loading: true, result: null, error: null },
+             ...(st.engine ? { engineBase: engineBase(st.engine, "this question") } : {}) });
     try {
       const r = await api.ask(question);
       st.set({ askState: { loading: false, result: r, error: r.error ?? null } });

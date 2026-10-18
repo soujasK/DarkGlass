@@ -130,7 +130,13 @@ function useEventStream() {
         } else if (e.type.startsWith("proof.")) {
           const cur = useMeshStore.getState().proof;
           const p = e.payload;
-          if (e.type === "proof.started") set({ proof: { ...cur, running: true, stage: "snapshot", cableId: p.cable_id, error: null } });
+          if (e.type === "proof.started") {
+            set({ proof: { ...cur, running: true, stage: "snapshot", cableId: p.cable_id, error: null } });
+            // Only a proof started from the Proof tab gets its own count; the automatic one after a fix
+            // must not wipe the incident's numbers off the screen.
+            const now = useMeshStore.getState();
+            if (now.mode === "proof" && now.engine) set({ engineBase: engineBase(now.engine, "this proof") });
+          }
           else if (e.type === "proof.progress") set({ proof: { ...cur, running: true, stage: p.stage, cableId: p.cable_id } });
           else if (e.type === "proof.complete") set({ proof: { running: false, stage: null, cableId: p.report.cable_id, report: p.report, error: null } });
           else if (e.type === "proof.error") set({ proof: { ...cur, running: false, stage: null, error: p.error } });
