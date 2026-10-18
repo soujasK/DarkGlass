@@ -23,7 +23,8 @@ export function TopBar() {
       return;
     }
     st.clearRun();
-    st.set({ notice: null });
+    // Back to the start: the Incident tab's "Which cable breaks?" screen, whichever tab Reset was pressed on.
+    st.set({ notice: null, mode: "incident", drawerOpen: false });
     st.setSnapshot(snap);
     const [tunnels, health, faultCables] = await Promise.all([api.tunnels(), api.health(), api.cables()]);
     st.set({ tunnels, health, faultCables, askState: { loading: false, result: null, error: null } });
