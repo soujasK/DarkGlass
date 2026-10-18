@@ -7,12 +7,13 @@ import json
 import logging
 from typing import Any, Literal
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from pydantic import BaseModel
 
 from app.api.ws import bus
 from app.core.config import get_settings
 from app.core.database import ping, run
+from app.core.limits import HourlyCap, visitor_of
 from app.services.chaos_engine import chaos
 
 router = APIRouter(prefix="/api")
@@ -61,6 +62,10 @@ def _background(coro) -> None:
     _tasks.add(task)
     task.add_done_callback(_tasks.discard)
 _bench_state: dict[str, Any] = {"running": False, "error": None}
+
+
+_agent_cap = HourlyCap(get_settings().agent_hourly_limit, get_settings().agent_visitor_hourly_limit)
+_ask_cap = HourlyCap(get_settings().ask_hourly_limit, get_settings().ask_visitor_hourly_limit)
 
 
 @router.get("/health")
@@ -173,7 +178,7 @@ async def anchor_drag(req: AnchorDragRequest) -> dict[str, Any]:
 
 
 @router.post("/agent/run")
-async def agent_run(req: AgentRunRequest, background: BackgroundTasks) -> dict[str, Any]:
+async def agent_run(req: AgentRunRequest, request: Request, background: BackgroundTasks) -> dict[str, Any]:
     from mcp_server.agent_runner import run_llm, run_playbook
 
     snap = chaos.snapshot()
@@ -185,13 +190,20 @@ async def agent_run(req: AgentRunRequest, background: BackgroundTasks) -> dict[s
         raise HTTPException(status_code=409, detail="agent already running")
     if req.mode == "llm" and not get_settings().llm_available:
         raise HTTPException(status_code=503, detail="Gemini is turned off on this server; choose Playbook under Agent")
+    mode, notice = req.mode, None
+    if mode == "llm" and (hit := _agent_cap.take(visitor_of(request))):
+        # Over the demo's Gemini budget: run the same FalkorDB tools with the Playbook instead of failing.
+        mode = "playbook"
+        notice = ("Gemini has reached this demo's hourly limit, so the Playbook ran the same FalkorDB tools."
+                  if hit == "site" else
+                  "You have used this demo's Gemini runs for the hour, so the Playbook ran the same FalkorDB tools.")
     cable_id = snap["incident"]["cable_id"]
 
     async def execute() -> dict[str, Any]:
         async with _agent_lock:
             await bus.publish("state", chaos.mark_agent_started())
             try:
-                result = await (run_llm if req.mode == "llm" else run_playbook)(cable_id, bus.publish)
+                result = await (run_llm if mode == "llm" else run_playbook)(cable_id, bus.publish)
             except Exception as exc:  # surface the failure to the UI instead of hanging it
                 log.exception("agent run failed for %s", cable_id)
                 await bus.publish("state", chaos.mark_agent_failed())
@@ -203,10 +215,11 @@ async def agent_run(req: AgentRunRequest, background: BackgroundTasks) -> dict[s
                 _launch_proof(cable_id)  # measure this very cut in all three engines, in the background
             return final
 
-    if req.mode == "llm":
+    if mode == "llm":
         background.add_task(execute)
         return {"accepted": True, "mode": "llm"}
-    return await execute()
+    final = await execute()
+    return {**final, "notice": notice} if notice else final
 
 
 class ProofRequest(BaseModel):
@@ -258,6 +271,8 @@ async def proof_live_run(req: ProofRequest) -> dict[str, Any]:
     cable_id = req.cable_id or (snap["incident"] or {}).get("cable_id")
     if not cable_id:
         raise HTTPException(status_code=400, detail="pick a cable")
+    if not run("MATCH (c:CableSystem {id: $id}) RETURN count(c) AS n", {"id": cable_id}, read_only=True, track=False).rows[0]["n"]:
+        raise HTTPException(status_code=404, detail=f"no cable with id '{cable_id}'")
     if not _launch_proof(cable_id):
         raise HTTPException(status_code=409, detail="a proof is already running")
     return {"accepted": True, "cable_id": cable_id}
@@ -297,7 +312,7 @@ async def scan_run() -> dict[str, Any]:
 
 
 @router.post("/ask")
-async def ask_graph(req: AskRequest) -> dict[str, Any]:
+async def ask_graph(req: AskRequest, request: Request) -> dict[str, Any]:
     """Plain-English question -> Cypher (Gemini) -> read-only FalkorDB query."""
     from app.services.ask_graph import ask
 
@@ -305,6 +320,10 @@ async def ask_graph(req: AskRequest) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail="empty question")
     if not get_settings().llm_available:
         raise HTTPException(status_code=503, detail="Ask the graph needs Gemini, which is turned off on this server")
+    if hit := _ask_cap.take(visitor_of(request)):
+        raise HTTPException(status_code=429, detail=(
+            "Ask the graph has reached this demo's hourly limit; try again later" if hit == "site" else
+            "You have used this demo's questions for the hour; try again later"))
     try:
         return await asyncio.to_thread(ask, req.question.strip()[:400])
     except Exception as exc:

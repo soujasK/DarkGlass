@@ -449,7 +449,8 @@ def test_failed_fix_says_why():
     ("post", "/api/agent/run", {"mode": "yolo"}, 422),
     ("post", "/api/ask", {}, 422),
     ("post", "/api/proof/live", {}, 400),
-], ids=["empty-id", "injection", "wrong-type", "bad-mode", "no-question", "proof-no-cable"])
+    ("post", "/api/proof/live", {"cable_id": "no-such-cable"}, 404),
+], ids=["empty-id", "injection", "wrong-type", "bad-mode", "no-question", "proof-no-cable", "proof-unknown-cable"])
 def test_bad_requests_are_rejected_cleanly(client, method, path, body, code):
     assert getattr(client, method)(path, json=body).status_code == code
     assert severed_cables() == set()
