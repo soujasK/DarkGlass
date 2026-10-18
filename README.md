@@ -209,13 +209,30 @@ raises the per-query time limit to 15 s. FalkorDB's own default (1 s) is too sho
 graph load and the planet scan.
 
 **If something goes wrong:**
-- *"docker: command not found" or "Cannot connect to the Docker daemon"*: start Docker Desktop and run
-  the script again.
-- *"port is already allocated"*: another program uses 3000, 3001, 6390 or 8010. Stop it, then run the
-  script again.
-- *"python" not found on Windows*: install Python from python.org and tick "Add python.exe to PATH".
-- *The app says "Offline" (top right)*: the API is still loading the graph on first run. Wait about a
-  minute; it reconnects by itself.
+
+| What you see | Fix |
+|---|---|
+| **Setup** | |
+| `docker: command not found`, or `Cannot connect to the Docker daemon` | Install / start Docker Desktop, wait until it says it is running, then run the script again |
+| `docker compose` is not a command (Linux) | Install the Compose plugin (`sudo apt install docker-compose-plugin`), or add your user to the `docker` group if it needs `sudo` |
+| `port is already allocated`, or `EADDRINUSE` | Another program uses 3000, 3001, 6390 or 8010. Stop it, then run the script again |
+| `python` not found, or it opens the Microsoft Store (Windows) | Install Python 3.11+ from python.org and tick "Add python.exe to PATH" |
+| `running scripts is disabled on this system` (Windows) | Run it exactly as shown: `powershell -ExecutionPolicy Bypass -File .\start.ps1` |
+| `permission denied: ./start.sh` (macOS / Linux) | Run `bash start.sh`, or `chmod +x start.sh` once |
+| pip or npm errors about versions | Check `python --version` (3.11 or newer) and `node --version` (20 or newer) |
+| **Running** | |
+| The app says **Offline** (top right) | The API is still loading the graph on first run. Wait about a minute; it reconnects by itself |
+| The globe is blank or black | Turn on hardware acceleration in your browser (the globe uses WebGL), and use a recent Chrome, Edge or Firefox |
+| Planet scan fails, or the log says `could not fork` | Give Docker more memory (Docker Desktop, Settings, Resources: 4 GB is plenty) |
+| `Query timed out` in the API log | FalkorDB was started without the included `docker-compose.yml`. Run `docker compose up -d` from the repo folder |
+| An incident looks stuck | Click **Reset** (top right). The API also repairs half-finished incidents when it restarts |
+| Anything else odd with the data | `docker compose down -v` deletes the graph; the next start rebuilds it from the files in `data/` |
+| The app looks old after `git pull` | Delete `frontend/.next` and run the script again, so the frontend rebuilds |
+| **Gemini (optional)** | |
+| The agent stops with a Gemini error (model not found, permission denied, or quota) | Choose **Playbook** under Agent: it runs the same FalkorDB tools without Gemini. To use Gemini, see the next paragraph |
+| Ask the graph shows an error | It is the one feature that needs Gemini; set it up as below |
+| **FalkorDB Browser** | |
+| It shows a login page | Keep the defaults and click **Log in**, then pick `darkglass_core` (details below) |
 
 **FalkorDB Browser.** Open http://localhost:3001, or "Open in FalkorDB Browser" in the app's
 "Under the hood" drawer. On the login page keep the defaults (host `localhost`, port `6379`: the
