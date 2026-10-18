@@ -1,0 +1,20 @@
+# One public address: the API and its live updates go to the backend, everything else to the web app.
+# Caddy gets and renews the HTTPS certificate for $DOMAIN by itself.
+{$DOMAIN} {
+	encode zstd gzip
+
+	@api path /api/* /ws
+	handle @api {
+		reverse_proxy backend:8010
+	}
+	handle {
+		reverse_proxy frontend:3000
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
