@@ -10,8 +10,10 @@ html,
 body {
   margin: 0;
   height: 100%;
+  /* A fixed full-screen app: the closed drawer sits below the fold, so without this the page could scroll. */
+  overflow: hidden;
   background: #02060f;
-  color: #f8fafc;
+  color: #f2f4f7;
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
