@@ -252,7 +252,7 @@ works except Ask the graph.
 
 ```bash
 cd backend
-pytest -q              # 132 unit, scenario, algorithm and end-to-end tests, about 3 minutes
+pytest -q              # 137 unit, scenario, algorithm and end-to-end tests, about 3 minutes
 pytest -q -m slow      # also the full 603-cable planet scan
 ```
 
@@ -277,9 +277,10 @@ The tests cover:
 
 **Deploy it (public demo).** `deploy/` runs the whole stack on one server: FalkorDB, the API, the web
 app and Caddy, which gets the HTTPS certificate by itself. Only ports 80 and 443 are open; FalkorDB and its
-Browser stay private. Gemini runs on a capped budget: 30 agent runs and 60 questions an hour for the whole
-site. Past the cap, a fix runs the Playbook, which uses the same FalkorDB tools, and says
-so; Ask asks you to try later. Gemini signs in as the machine's own service account, so no key is stored, and
+Browser stay private. Gemini runs on a capped budget: 200 agent runs and 400 questions an hour for the whole
+site. No visitor is left waiting on a busy model: if Google rate-limits Gemini, it answers too slowly, or it
+stops before moving the traffic, the Playbook finishes the fix at once with the same FalkorDB tools and the
+screen says so. Past the cap a fix runs the Playbook too; Ask asks you to try again in a minute. Gemini signs in as the machine's own service account, so no key is stored, and
 `LLM_ENABLED=false` turns it off entirely. An incident left alone for 10 minutes resets, so each visitor starts
 clean.
 
