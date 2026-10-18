@@ -259,6 +259,13 @@ mcp_server/              FastMCP server, the four tools, playbook and LLM agents
 frontend/src/            Next.js + react-three-fiber globe, mode screens, FalkorDB engine bar
 ```
 
+## Build log
+
+- **Oct 15–16:** chose the problem, designed the four-layer graph model, picked the TeleGeography
+  data and prototyped the queries.
+- **Oct 17:** first working version committed.
+- **Oct 18:** testing, fixes, the Ask-the-graph eval and the switch to Gemini 3.8 Flash.
+
 ## AI assistance
 
 **During development:** Claude Code was used as a coding assistant, under the author's direction. The
