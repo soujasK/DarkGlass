@@ -336,14 +336,18 @@ export default function CuratorsDrawer() {
       <div className="flex items-center justify-between border-b border-white/[0.06] px-6 py-3">
         <span className="font-sans text-[14px] font-semibold tracking-[-0.01em] text-ink">Under the hood</span>
         <span className="text-muted">exact Cypher, parameters and benchmarks. Every figure is measured.</span>
-        <a
-          href="http://localhost:3001"
-          target="_blank"
-          rel="noreferrer"
-          className="text-ink-2 underline decoration-white/20 underline-offset-4 hover:text-ink"
-        >
-          Open in FalkorDB Browser
-        </a>
+        <span className="text-muted">
+          <a
+            href="http://localhost:3001"
+            target="_blank"
+            rel="noreferrer"
+            title="Click Log in (the defaults connect to this FalkorDB), then Select Graph: darkglass_core"
+            className="text-ink-2 underline decoration-white/20 underline-offset-4 hover:text-ink"
+          >
+            Open in FalkorDB Browser
+          </a>
+          {" "}· log in with the defaults, pick darkglass_core
+        </span>
         <button type="button" className="text-muted hover:text-ink" onClick={() => set({ drawerOpen: false })}>
           close
         </button>

@@ -171,6 +171,12 @@ left half-finished. FalkorDB data lives on a Docker volume.
 Ports: frontend 3000, API 8010, FalkorDB 6390, FalkorDB browser 3001. They are deliberately not
 8000 or 6379, to avoid clashing with local services.
 
+**FalkorDB Browser.** Open http://localhost:3001, or "Open in FalkorDB Browser" in the app's
+"Under the hood" drawer. On the login page keep the defaults (host `localhost`, port `6379`: the
+port inside the container, no username or password) and click **Log in**. Then choose
+`darkglass_core` under **Select Graph** and run any Cypher, for example
+`MATCH (j:TrainingJob)-[r]->(n) RETURN j, r, n LIMIT 25`.
+
 **Gemini 3.8 Flash (optional).** It runs on Google Cloud Vertex AI with your gcloud login; no API key
 is stored. Run `gcloud auth application-default login`, then set `DARKGLASS_VERTEX_PROJECT_ID` (see
 `backend/.env.example`). `DARKGLASS_GEMINI_MODEL` sets the model for both the agent and Ask the
