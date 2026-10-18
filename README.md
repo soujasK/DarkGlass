@@ -26,6 +26,25 @@ Each item is also labelled in the app with a small tag carrying the same name.
 | **Actions based on what the graph shows** | "Now on Havfrue/AEC-2": the detour's limits come from the traversal's answer, MAREA is excluded because the graph puts it in the same trench, then bandwidth is reserved and the tunnel's `CARRIED_BY` edge moves. The fix is written to graph memory | `mcp_server/tools/spectrum_allocator.py`, `backend/app/services/chaos_engine.py` |
 | **Explainable results** | "Why this route", each tool's exact Cypher (click it), Gemini's summary, "Not fixed yet" for traffic left behind, and the Proof tab, which answers the same cut in FalkorDB, NetworkX and SQL | `frontend/src/components/hud/Chapter.tsx`, `backend/app/services/live_proof.py` |
 
+## FalkorDB features used, in FalkorDB's own terms
+
+Times are in the demo video; the same wording is on screen in the app.
+
+| FalkorDB feature | How DarkGlass uses it | In the app | Video |
+|---|---|---|---|
+| **MCP** | Gemini discovers DarkGlass's four FalkorDB tools with MCP and picks each one itself | "choosing tools over MCP", tag "Tool selection through MCP" | 0:37 |
+| **Query with Cypher** | An 11-hop traversal finds who is hurt; writes move the traffic; Ask the graph turns English into read-only Cypher | Every tool and figure opens its exact Cypher | 0:45, 1:42, 2:25 |
+| **Graph algorithms as agent tools: Shortest path** | `algo.SPpaths` finds the fastest detour that avoids the damaged trench | Engine bar: "Shortest path (SPpaths)"; tool "detour (SPpaths)" | 0:54 |
+| **Centrality** | `algo.betweenness` checks the detour for overloaded relay stations | Engine bar: "Centrality (betweenness)"; tool "bottlenecks (betweenness)" | 1:02 |
+| **Connected components** | `algo.WCC` finds the landing stations each failure cuts off | Engine bar: "Connected components (WCC)" during the planet scan | 2:11 |
+| **Max flow** (beyond the list) | `algo.maxFlow` measures North America to Europe capacity after each failure | Engine bar: "maxFlow"; board "Drains the Atlantic" | 2:11 |
+| **Isolated graphs in one instance** | `GRAPH.COPY` makes 4 sandbox graphs for the planet scan, and one for the proof; the live graph is never touched | "4 sandbox graphs in one FalkorDB instance (GRAPH.COPY)" | 1:57 |
+| **Context that persists across sessions** | Each agent step writes to the graph (span cut, bandwidth reserved, tunnel moved); a reload or restart finds the incident and its result | "Saved in the graph: reload and the incident is still here" | 1:35 |
+| **Explore the graph: FalkorDB Browser** | The same graph opens in FalkorDB Browser at http://localhost:3001 (log in with the defaults, pick `darkglass_core`) | Drawer: "Open in FalkorDB Browser" | 1:48 |
+
+Not used: PageRank, community detection, and the GraphRAG-SDK / LangChain / LlamaIndex style integrations;
+DarkGlass talks to FalkorDB through MCP and Cypher directly.
+
 ## What you see
 
 | | |
