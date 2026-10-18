@@ -228,6 +228,7 @@ function BenchmarkBody({
 }) {
   const sqlDeep = r.sqlite.runs[r.sqlite.runs.length - 1];
   const jitterMs = useMeshStore((s) => s.health?.flagship?.jitter_ms ?? null);
+  const revertsAt = useMeshStore((s) => s.benchmarkRevertsAt);
   const pctLine = (p: { p50: number; p95: number; p99: number; n: number }) =>
     `p50 ${fmtMs(p.p50)}  p95 ${fmtMs(p.p95)}  p99 ${fmtMs(p.p99)}  n=${p.n}`;
 
@@ -318,6 +319,12 @@ function BenchmarkBody({
           [{running ? "RUNNING" : "RE-RUN QUICK"}]
         </button>
       </div>
+      {revertsAt && (
+        <div className="text-muted">
+          this server&apos;s run; the reference run returns at{" "}
+          {new Date(revertsAt * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+        </div>
+      )}
       {err && <div className="text-crimson">{err}</div>}
     </div>
   );

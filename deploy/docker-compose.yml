@@ -39,6 +39,8 @@ services:
       DARKGLASS_ASK_HOURLY_LIMIT: "400"
       DARKGLASS_LLM_FAIL_FAST: "true"
       DARKGLASS_IDLE_RESET_MINUTES: "10"
+      # A visitor's benchmark re-run shows for 10 minutes, then the panel returns to the reference run.
+      DARKGLASS_BENCHMARK_KEEP_MINUTES: "10"
 
   frontend:
     build:

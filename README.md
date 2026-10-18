@@ -8,7 +8,7 @@
 [![FalkorDB](https://img.shields.io/badge/FalkorDB-graph_engine-7AA7D9?style=flat-square)](https://www.falkordb.com)
 [![MCP](https://img.shields.io/badge/MCP-tool_selection-93BBEA?style=flat-square)](https://modelcontextprotocol.io)
 [![Gemini](https://img.shields.io/badge/Gemini_3.8_Flash-Vertex_AI-B8D0EE?style=flat-square)](#the-agent-and-the-mcp-server)
-[![Tests](https://img.shields.io/badge/tests-137_passing-3FB950?style=flat-square)](#tests)
+[![Tests](https://img.shields.io/badge/tests-138_passing-3FB950?style=flat-square)](#tests)
 
 **[🌐 Live demo](https://8-234-112-123.sslip.io)** &nbsp;·&nbsp;
 **[▶ 3-minute video](https://youtu.be/-fh9tKQJ4Z8)** &nbsp;·&nbsp;
@@ -44,7 +44,7 @@ step with the exact Cypher behind it.
 | **Where to go** | `algo.SPpaths` finds the safe detour in **0.8 ms**; the same search in SQL takes **1,770 ms** and misses it below 8 hops |
 | **Agent** | Gemini 3.8 Flash picks FalkorDB tools over **MCP**; a no-AI Playbook runs the same tools and reaches the same fix |
 | **Planet scan** | every one of the 603 cables failed once, in 4 `GRAPH.COPY` sandboxes, in about a minute |
-| **Verified** | 137 tests; algorithms cross-checked against NetworkX; text-to-Cypher eval 66 / 69 |
+| **Verified** | 138 tests; algorithms cross-checked against NetworkX; text-to-Cypher eval 66 / 69 |
 
 ## Contents
 
@@ -350,7 +350,8 @@ DOMAIN=your.host.name docker compose -f deploy/docker-compose.yml up -d --build
 - **Nobody waits on a busy model:** if Google rate-limits Gemini, it answers too slowly, or it stops
   before moving the traffic, the Playbook finishes the fix at once with the same FalkorDB tools, and the
   screen says so. Past the hourly budget, a fix runs the Playbook too; Ask asks you to try again in a minute.
-- **Clean for every visitor:** an incident left alone for 10 minutes resets.
+- **Clean for every visitor:** an incident left alone for 10 minutes resets, and a benchmark re-run shows
+  for 10 minutes before the panel returns to the dated reference run quoted in this README.
 
 The [live demo](https://8-234-112-123.sslip.io) is a Google Compute Engine e2-medium (2 vCPU, 4 GB) with
 `deploy/gce-startup.sh` as its startup script: it installs Docker, fetches this repo, uses
@@ -388,7 +389,7 @@ run could not move are listed as `still_down` and shown on screen, never hidden 
 
 ```bash
 cd backend
-pytest -q              # 137 unit, scenario, algorithm and end-to-end tests, about 3 minutes
+pytest -q              # 138 unit, scenario, algorithm and end-to-end tests, about 3 minutes
 pytest -q -m slow      # also the full 603-cable planet scan
 ```
 
@@ -464,9 +465,11 @@ deploy/                  production compose, Caddy HTTPS, Google Compute Engine 
 
 ## AI assistance
 
-**During development:** Claude Code was used as a coding assistant, under the author's direction. The
-author reviewed and tested the work: every number on screen was checked against the graph, and the test
-suite and the Ask-the-graph eval run against a live FalkorDB.
+**During development:** the author owned the project's direction: the problem, the four-layer graph model,
+the architecture, what to test and which scenarios matter, and every product decision. Claude Code, an AI
+coding assistant, wrote most of the code and tests to those decisions. The author directed each change,
+reviewed it, and verified the results against the live graph: every number on screen, the test suite, and
+the Ask-the-graph eval.
 
 **At runtime, AI is used in exactly two places, and both are optional:**
 

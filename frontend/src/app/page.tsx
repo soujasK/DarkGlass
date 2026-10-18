@@ -47,7 +47,7 @@ function useBootstrap() {
           api.proof(),
         ]);
         set({
-          health, tunnels, faultCables, benchmark: bench.report, benchmarkRunning: bench.running,
+          health, tunnels, faultCables, benchmark: bench.report, benchmarkRunning: bench.running, benchmarkRevertsAt: bench.reverts_at ?? null,
           proof: { running: proof.running, stage: proof.stage, cableId: proof.cable_id, report: proof.report, error: proof.error },
         });
         const st = useMeshStore.getState();
@@ -145,7 +145,7 @@ function useEventStream() {
           if (e.type === "benchmark.started") set({ benchmarkRunning: true });
           else {
             const b = await api.benchmark();
-            set({ benchmark: b.report, benchmarkRunning: b.running });
+            set({ benchmark: b.report, benchmarkRunning: b.running, benchmarkRevertsAt: b.reverts_at ?? null });
           }
         }
       };

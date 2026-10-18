@@ -63,6 +63,9 @@ class Settings(BaseSettings):
     # Public demo: never leave a visitor waiting on a busy model. Gemini gets one quick retry on a rate limit
     # and 25 s per answer, and if it fails or stops early, the Playbook finishes the fix on the live graph.
     llm_fail_fast: bool = False
+    # Public demo: a visitor's benchmark re-run is shown for this many minutes, then the panel returns to the
+    # stored reference run, which is never overwritten (0 = a re-run replaces the stored run, as locally).
+    benchmark_keep_minutes: float = 0
 
     @property
     def llm_available(self) -> bool:

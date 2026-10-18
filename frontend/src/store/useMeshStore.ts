@@ -129,6 +129,8 @@ type MeshState = {
   drawerOpen: boolean;
   selectedTrace: { step: number; index: number } | null;
   benchmark: BenchmarkReport | null;
+  /** Public demo: when a visitor's re-run gives way to the reference run again (epoch seconds). */
+  benchmarkRevertsAt: number | null;
   benchmarkRunning: boolean;
   proof: ProofState;
   notice: string | null;
@@ -177,6 +179,7 @@ export const useMeshStore = create<MeshState>((set, get) => ({
   drawerOpen: false,
   selectedTrace: null,
   benchmark: null,
+  benchmarkRevertsAt: null,
   benchmarkRunning: false,
   proof: { running: false, stage: null, cableId: null, report: null, error: null },
   notice: null,

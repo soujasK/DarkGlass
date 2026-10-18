@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
 import logging
 from typing import Any, Literal
 
@@ -62,6 +63,7 @@ def _background(coro) -> None:
     _tasks.add(task)
     task.add_done_callback(_tasks.discard)
 _bench_state: dict[str, Any] = {"running": False, "error": None}
+_bench_fresh: dict[str, Any] = {"report": None, "until": 0.0}  # a demo re-run, shown for a while
 
 
 _agent_cap = HourlyCap(get_settings().agent_hourly_limit, get_settings().agent_visitor_hourly_limit)
@@ -414,6 +416,9 @@ def scan_latest() -> dict[str, Any]:
 
 @router.get("/benchmark")
 def benchmark() -> dict[str, Any]:
+    if _bench_fresh["report"] and time.time() < _bench_fresh["until"]:
+        return {"running": _bench_state["running"], "error": _bench_state["error"], "report": _bench_fresh["report"],
+                "reverts_at": _bench_fresh["until"]}
     path = get_settings().benchmark_dir / "latest.json"
     report = json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
     return {"running": _bench_state["running"], "error": _bench_state["error"], "report": report}
@@ -430,7 +435,10 @@ async def benchmark_run(req: BenchmarkRunRequest) -> dict[str, Any]:
         _bench_state.update(running=True, error=None)
         await bus.publish("benchmark.started", {"quick": req.quick})
         try:
-            report = await asyncio.to_thread(run_benchmark, req.quick)
+            keep = get_settings().benchmark_keep_minutes
+            report = await asyncio.to_thread(run_benchmark, req.quick, 30.0, keep <= 0)
+            if keep > 0:  # public demo: show this run for a while; the stored reference run stays as it is
+                _bench_fresh.update(report=report, until=time.time() + keep * 60)
             await bus.publish("benchmark.complete", {"headline": report["headline"]})
         except Exception as exc:
             _bench_state["error"] = str(exc)

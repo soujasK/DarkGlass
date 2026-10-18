@@ -39,7 +39,7 @@ export const api = {
   engine: () => request<import("@/store/useMeshStore").EngineSnapshot>("/api/engine"),
   reset: () => request<Snapshot>("/api/reset", { method: "POST" }),
   benchmark: () =>
-    request<{ running: boolean; error: string | null; report: BenchmarkReport | null }>("/api/benchmark"),
+    request<{ running: boolean; error: string | null; report: BenchmarkReport | null; reverts_at?: number }>("/api/benchmark"),
   proof: () =>
     request<{ running: boolean; cable_id: string | null; stage: string | null; error: string | null; report: LiveProof | null }>(
       "/api/proof/live",

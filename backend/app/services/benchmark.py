@@ -296,7 +296,7 @@ def bench_networkx(topo: dict, it: dict[str, int]) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def run_benchmark(quick: bool = False, sql_timeout_s: float = 30.0) -> dict[str, Any]:
+def run_benchmark(quick: bool = False, sql_timeout_s: float = 30.0, save: bool = True) -> dict[str, Any]:
     s = get_settings()
     topo = load_topology_file()
     file_fp = fingerprint([(x["src"], x["dst"], x["cable_id"], x["latency_ms"]) for x in topo["spans"]])
@@ -365,8 +365,9 @@ def run_benchmark(quick: bool = False, sql_timeout_s: float = 30.0) -> dict[str,
             "networkx_betweenness_exact_p50_ms": nxr["centrality_exact"]["wall_ms"]["p50"],
         },
     }
-    s.benchmark_dir.mkdir(parents=True, exist_ok=True)
-    (s.benchmark_dir / "latest.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    if save:
+        s.benchmark_dir.mkdir(parents=True, exist_ok=True)
+        (s.benchmark_dir / "latest.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     return report
 
 
