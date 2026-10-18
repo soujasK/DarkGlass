@@ -10,10 +10,10 @@
 [![Gemini](https://img.shields.io/badge/Gemini_3.8_Flash-Vertex_AI-B8D0EE?style=flat-square)](#the-agent-and-the-mcp-server)
 [![Tests](https://img.shields.io/badge/tests-138_passing-3FB950?style=flat-square)](#tests)
 
-**[🌐 Live demo](https://8-234-112-123.sslip.io)** &nbsp;·&nbsp;
-**[▶ 3-minute video](https://youtu.be/-fh9tKQJ4Z8)** &nbsp;·&nbsp;
-**[📝 Blog: 419 milliseconds](https://darkglass-blog.onrender.com)** &nbsp;·&nbsp;
-**[⚡ Run it in one command](#run-it)**
+**[Live demo](https://8-234-112-123.sslip.io)** &nbsp;·&nbsp;
+**[3-minute video](https://youtu.be/-fh9tKQJ4Z8)** &nbsp;·&nbsp;
+**[Blog: 419 milliseconds](https://darkglass-blog.onrender.com)** &nbsp;·&nbsp;
+**[Run it in one command](#run-it)**
 
 </div>
 
@@ -59,13 +59,13 @@ step with the exact Cypher behind it.
 
 ```mermaid
 flowchart LR
-    A["⚓ Cable cut<br/>spans retyped to<br/>:SEVERED_SPAN"] --> B{"Agent<br/>Gemini 3.8 Flash over MCP<br/>or the Playbook"}
+    A["Cable cut<br/>spans retyped to<br/>:SEVERED_SPAN"] --> B{"Agent<br/>Gemini 3.8 Flash over MCP<br/>or the Playbook"}
     B -->|"1 · who is hurt"| T1["11-hop Cypher traversal<br/>+ GPU impact sweep"]
     B -->|"2 · where to go"| T2["algo.SPpaths<br/>trench and full links masked"]
     B -->|"3 · will it hold"| T3["algo.betweenness<br/>vs the graph's own p95 / p99"]
     B -->|"4 · move it"| T4["atomic write<br/>reserve bandwidth,<br/>move CARRIED_BY"]
     T1 & T2 & T3 & T4 --> G[("FalkorDB<br/>darkglass_core<br/>~166k nodes")]
-    G --> R["✅ Training restored<br/>why this route · every query · memory"]
+    G --> R["Training restored<br/>why this route · every query · memory"]
 ```
 
 The agent reads the graph to decide, then acts on it: the detour's limits come from the traversal's
