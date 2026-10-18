@@ -3,8 +3,8 @@ services:
     image: falkordb/falkordb:latest
     container_name: darkglass-falkordb
     ports:
-      - "6390:6379"   # Redis protocol (host 6390 avoids clashing with a local Redis)
-      - "3001:3000"   # FalkorDB Browser UI
+      - "127.0.0.1:6390:6379"   # Redis protocol, this machine only (host 6390 avoids clashing with a local Redis)
+      - "127.0.0.1:3001:3000"   # FalkorDB Browser UI, this machine only
     volumes:
       - falkordb-data:/var/lib/falkordb/data   # the graph survives container restarts
     environment:
