@@ -122,7 +122,7 @@ type MeshState = {
   engine: EngineSnapshot | null;
   engineReceivedAt: number;
   engineBase: EngineBase | null;
-  scan: { running: boolean; done: number; total: number; elapsedMs: number; heat: Record<string, number>; summary: ScanSummary | null };
+  scan: { running: boolean; done: number; total: number; elapsedMs: number; heat: Record<string, number>; summary: ScanSummary | null; workers?: number };
   askState: { loading: boolean; result: AskResult | null; error: string | null };
 
   // presentation

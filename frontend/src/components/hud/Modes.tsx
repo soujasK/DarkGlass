@@ -65,6 +65,15 @@ function Board({ title, cards, line, onPick }: {
   );
 }
 
+/** The scan never touches the live graph: say so, with the real sandbox count. */
+function Sandboxes({ n }: { n: number }) {
+  return (
+    <p className="mt-3 max-w-[480px] font-sans text-[14px] leading-[21px] text-ink-2">
+      {n} sandbox graphs in one FalkorDB instance (GRAPH.COPY); the live graph is never touched.
+    </p>
+  );
+}
+
 export function ScanPanel() {
   const st = useMeshStore();
   const { scan } = st;
@@ -94,6 +103,7 @@ export function ScanPanel() {
           <div className="h-px bg-phosphor transition-[width] duration-300" style={{ width: `${(100 * scan.done) / (scan.total || st.catalog.length)}%` }} />
         </div>
         <div className="mt-3 font-sans text-[13px] tabular-nums text-ink-3">{(scan.elapsedMs / 1000).toFixed(1)} s</div>
+        {scan.workers ? <Sandboxes n={scan.workers} /> : null}
       </Shell>
     );
   }
@@ -108,6 +118,7 @@ export function ScanPanel() {
             <span className="text-ink-3">in {(s.duration_ms / 1000).toFixed(0)} s</span>
           </H1>
           <Lead>Every subsea cable on Earth, failed once.</Lead>
+          <Sandboxes n={s.workers} />
           <button type="button" onClick={start} className="mt-6 font-sans text-[14px] text-ink-3 transition-colors hover:text-ink">
             Run again
           </button>

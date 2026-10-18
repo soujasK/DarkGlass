@@ -431,6 +431,7 @@ export default function Chapter() {
             {result.still_down.length === 1 ? "is" : "are"} still on the cut cable. The agent moves the most critical traffic first.
           </p>
         )}
+        <p className="mt-3 font-sans text-[13px] text-ink-3">Saved in the graph: reload and the incident is still here.</p>
         <AgentTrail s={s} />
         <div className="gap-section flex gap-14">
           {stats.map(([v, k]) => (

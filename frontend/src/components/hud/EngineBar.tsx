@@ -8,9 +8,9 @@ const HOT_S = 1.6;
 /** Short FalkorDB names; the capability description lives in the tooltip. */
 const LABEL: Record<string, string> = {
   traversal: "Traversal",
-  sppaths: "SPpaths",
-  betweenness: "Betweenness",
-  wcc: "WCC",
+  sppaths: "Shortest path (SPpaths)",
+  betweenness: "Centrality (betweenness)",
+  wcc: "Connected components (WCC)",
   maxflow: "maxFlow",
   copy: "GRAPH.COPY",
   mutation: "Writes",

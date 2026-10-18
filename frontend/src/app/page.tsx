@@ -117,7 +117,7 @@ function useEventStream() {
           const cur = useMeshStore.getState().scan;
           const p = e.payload;
           if (e.type === "scan.started") {
-            set({ scan: { ...cur, running: true, done: 0, total: p.total, elapsedMs: 0, heat: {}, summary: null } });
+            set({ scan: { ...cur, running: true, done: 0, total: p.total, elapsedMs: 0, heat: {}, summary: null, workers: p.workers } });
           } else if (e.type === "scan.progress") {
             const heat = { ...cur.heat };
             for (const b of p.batch as { id: string; risk: number }[]) heat[b.id] = Math.min(1, Math.sqrt(b.risk / 90));
