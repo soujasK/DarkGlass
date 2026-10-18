@@ -102,7 +102,11 @@ def _generate(client, model: str, contents: str, config: dict):
         try:
             return client.models.generate_content(model=model, contents=contents, config=config)
         except Exception as exc:
-            if "timeout" not in f"{type(exc).__name__} {exc}".lower():
+            text = f"{type(exc).__name__} {exc}"
+            if "RESOURCE_EXHAUSTED" in text and attempt < ATTEMPTS:
+                time.sleep((5, 15)[attempt - 1])  # Vertex quota is momentarily used up
+                continue
+            if "timeout" not in text.lower():
                 raise
             if attempt == ATTEMPTS:
                 raise RuntimeError(f"{model} did not answer in {ATTEMPTS} tries of {ATTEMPT_TIMEOUT_S:.0f} s") from exc

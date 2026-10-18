@@ -47,6 +47,8 @@ def _root_cause(exc: BaseException) -> str:
     if "NOT_FOUND" in text and "models/" in text:
         model = text.split("models/", 1)[1].split("`")[0].split("'")[0]
         return f"Gemini model '{model}' is not available on this Google Cloud project"
+    if "RESOURCE_EXHAUSTED" in text:
+        return "Vertex AI quota is used up for now; wait a minute, or pick Playbook"
     if "PERMISSION_DENIED" in text or "DefaultCredentialsError" in type(exc).__name__ + text:
         return "no access to Vertex AI; run `gcloud auth application-default login` and set the project"
     first = text.split("\n")[0]

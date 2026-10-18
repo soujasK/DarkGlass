@@ -26,6 +26,7 @@ MAX_TURNS = 12
 # abandoned and retried; only when every attempt hangs does the run fail, loudly.
 TURN_TIMEOUT_S = 45.0
 TURN_ATTEMPTS = 3
+QUOTA_BACKOFF_S = (5, 15, 30)  # waits after a 429, per attempt
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -116,6 +117,12 @@ async def run_gemini(cable_id: str, emit: Emit, system_prompt: str) -> dict[str,
                             raise RuntimeError(f"{s.gemini_model} did not answer in {TURN_ATTEMPTS} tries of "
                                                f"{TURN_TIMEOUT_S:.0f} s each") from None
                         await emit("agent.thought", {"text": f"{s.gemini_model} is slow to answer; asking again."})
+                    except Exception as exc:
+                        # 429: the project's Vertex quota is momentarily used up; it usually frees within seconds.
+                        if "RESOURCE_EXHAUSTED" not in str(exc) or attempt == TURN_ATTEMPTS:
+                            raise
+                        await emit("agent.thought", {"text": "Vertex AI is rate-limiting; waiting, then asking again."})
+                        await asyncio.sleep(QUOTA_BACKOFF_S[attempt - 1])
                 candidate = response.candidates[0] if response.candidates else None
                 if candidate is None or candidate.content is None:
                     summary = "Model returned no content."
