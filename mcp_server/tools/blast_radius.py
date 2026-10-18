@@ -53,12 +53,18 @@ RETURN DISTINCT cs.id AS exposed_cable, cs.name AS exposed_cable_name, job.id AS
 
 # The full cross-layer chain as one pure traversal, from the landing station down to a single GPU:
 # station -> cable -> tunnel -> border router -> super-spine -> spine -> leaf -> server -> NIC -> GPU -> ring -> job
+# The example path goes through the most critical tunnel on the cable (gradient sync first), so it
+# shows the job the cut actually freezes.
 PATH = """
+MATCH (:CableSystem {id: $cable_id})<-[:CARRIED_BY]-(first:LogicalTunnel)
+WITH first ORDER BY CASE first.traffic_class WHEN 'GRADIENT_SYNC' THEN 0 WHEN 'CHECKPOINT_BURST' THEN 1 ELSE 2 END,
+     first.id
+LIMIT 1
 MATCH p = (s:LandingStation)-[:LANDS]->(c:CableSystem {id: $cable_id})<-[:CARRIED_BY]-(t:LogicalTunnel)
           -[:TERMINATES_AT]->(:BorderRouter)-[:FEEDS]->(:SuperSpine)-[:FEEDS]->(:Spine)-[:FEEDS]->(:Leaf)
           -[:FEEDS]->(:Server)-[:HAS_NIC]->(:NIC)-[:ATTACHED_TO]->(:GPU)-[:MEMBER_OF]->(ring:NCCL_Ring)
           <-[:COORDINATES]-(:TrainingJob)
-WHERE (ring)-[:USES_TUNNEL]->(t)
+WHERE t = first AND (ring)-[:USES_TUNNEL]->(t)
 RETURN length(p) AS hops,
        [n IN nodes(p) | coalesce(n.code, n.name, n.id)] AS nodes,
        [x IN relationships(p) | type(x)] AS rels,
