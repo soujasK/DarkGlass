@@ -202,8 +202,29 @@ async def agent_run(req: AgentRunRequest, request: Request, background: Backgrou
     async def execute() -> dict[str, Any]:
         async with _agent_lock:
             await bus.publish("state", chaos.mark_agent_started())
+            held: list[dict[str, Any]] = []
+
+            async def emit(kind: str, payload: dict[str, Any]) -> None:
+                # Hold back Gemini's "not restored" ending while the Playbook may still finish the fix, so the
+                # screen does not flash a failure first.
+                if kind == "agent.complete" and mode == "llm" and not payload.get("restored")                         and get_settings().llm_fail_fast:
+                    held.append(payload)
+                    return
+                await bus.publish(kind, payload)
+
             try:
-                result = await (run_llm if mode == "llm" else run_playbook)(cable_id, bus.publish)
+                try:
+                    result = await (run_llm if mode == "llm" else run_playbook)(cable_id, emit)
+                except Exception as exc:
+                    if not _playbook_can_finish(mode, cable_id):
+                        raise
+                    log.warning("Gemini failed for %s (%s); the Playbook finishes the fix", cable_id, _root_cause(exc))
+                    result = await _finish_with_playbook(cable_id, f"Gemini was unavailable ({_root_cause(exc)})")
+                else:
+                    if not result.get("restored") and _playbook_can_finish(mode, cable_id):
+                        result = await _finish_with_playbook(cable_id, "Gemini stopped before moving the traffic")
+                    elif held:
+                        await bus.publish("agent.complete", held[-1])
             except Exception as exc:  # surface the failure to the UI instead of hanging it
                 log.exception("agent run failed for %s", cable_id)
                 await bus.publish("state", chaos.mark_agent_failed())
@@ -220,6 +241,23 @@ async def agent_run(req: AgentRunRequest, request: Request, background: Backgrou
         return {"accepted": True, "mode": "llm"}
     final = await execute()
     return {**final, "notice": notice} if notice else final
+
+
+def _playbook_can_finish(mode: str, cable_id: str) -> bool:
+    """On a public demo, a Gemini run that failed or stopped early is finished by the Playbook, but only while
+    traffic is still on the cut cable, so a reroute Gemini already applied is never applied twice."""
+    if mode != "llm" or not get_settings().llm_fail_fast:
+        return False
+    left = run("MATCH (t:LogicalTunnel)-[:CARRIED_BY]->(:CableSystem {id: $c}) RETURN count(t) AS n",
+               {"c": cable_id}, read_only=True, track=False).rows[0]["n"]
+    return left > 0
+
+
+async def _finish_with_playbook(cable_id: str, why: str) -> dict[str, Any]:
+    from mcp_server.agent_runner import run_playbook
+
+    await bus.publish("agent.notice", {"text": f"{why}, so the Playbook finished the fix with the same FalkorDB tools."})
+    return await run_playbook(cable_id, bus.publish)
 
 
 class ProofRequest(BaseModel):
@@ -327,6 +365,8 @@ async def ask_graph(req: AskRequest, request: Request) -> dict[str, Any]:
     try:
         return await asyncio.to_thread(ask, req.question.strip()[:400])
     except Exception as exc:
+        if "RESOURCE_EXHAUSTED" in str(exc) or "429" in str(exc):
+            raise HTTPException(status_code=503, detail="Gemini is busy right now; try again in a minute") from exc
         raise HTTPException(status_code=502, detail=f"model call failed: {exc}") from exc
 
 

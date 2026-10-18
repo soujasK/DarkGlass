@@ -108,24 +108,27 @@ async def run_gemini(cable_id: str, emit: Emit, system_prompt: str) -> dict[str,
                 text=f"ALERT: anchor drag reported on cable '{cable_id}'. Gradient sync between US-East-Ashburn "
                      "and EU-West-Dublin has stalled. Restore it.")])]
 
+            # A public demo gives up on a busy model quickly; the API then lets the Playbook finish the fix.
+            attempts, turn_timeout, backoff = ((2, 25.0, (5,)) if s.llm_fail_fast
+                                               else (TURN_ATTEMPTS, TURN_TIMEOUT_S, QUOTA_BACKOFF_S))
             for _ in range(MAX_TURNS):
-                for attempt in range(1, TURN_ATTEMPTS + 1):
+                for attempt in range(1, attempts + 1):
                     try:
                         response = await asyncio.wait_for(
                             client.aio.models.generate_content(model=s.gemini_model, contents=contents, config=config),
-                            timeout=TURN_TIMEOUT_S)
+                            timeout=turn_timeout)
                         break
                     except asyncio.TimeoutError:
-                        if attempt == TURN_ATTEMPTS:
-                            raise RuntimeError(f"{s.gemini_model} did not answer in {TURN_ATTEMPTS} tries of "
-                                               f"{TURN_TIMEOUT_S:.0f} s each") from None
+                        if attempt == attempts:
+                            raise RuntimeError(f"{s.gemini_model} did not answer in {attempts} tries of "
+                                               f"{turn_timeout:.0f} s each") from None
                         await emit("agent.thought", {"text": f"{s.gemini_model} is slow to answer; asking again."})
                     except Exception as exc:
                         # 429: the project's Vertex quota is momentarily used up; it usually frees within seconds.
-                        if "RESOURCE_EXHAUSTED" not in str(exc) or attempt == TURN_ATTEMPTS:
+                        if "RESOURCE_EXHAUSTED" not in str(exc) or attempt == attempts:
                             raise
                         await emit("agent.thought", {"text": "Vertex AI is rate-limiting; waiting, then asking again."})
-                        await asyncio.sleep(QUOTA_BACKOFF_S[attempt - 1])
+                        await asyncio.sleep(backoff[attempt - 1])
                 candidate = response.candidates[0] if response.candidates else None
                 if candidate is None or candidate.content is None:
                     summary = "Model returned no content."

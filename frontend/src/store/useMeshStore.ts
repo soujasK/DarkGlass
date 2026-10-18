@@ -254,6 +254,10 @@ export const useMeshStore = create<MeshState>((set, get) => ({
           detourIgnitedAt: p.restored ? performance.now() : null,
         });
         break;
+      case "agent.notice":
+        // e.g. the Playbook finished a fix Gemini could not complete on the public demo
+        set({ info: p.text });
+        break;
       case "agent.error":
         // Drop the partial run so the screen goes back to the fix button and the agent picker.
         set({ agentRunning: false, steps: [], thoughts: [], notice: `agent error: ${p.error}. Pick Playbook to run without Gemini.` });

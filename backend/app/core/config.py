@@ -60,6 +60,9 @@ class Settings(BaseSettings):
     agent_visitor_hourly_limit: int = 0
     ask_hourly_limit: int = 0
     ask_visitor_hourly_limit: int = 0
+    # Public demo: never leave a visitor waiting on a busy model. Gemini gets one quick retry on a rate limit
+    # and 25 s per answer, and if it fails or stops early, the Playbook finishes the fix on the live graph.
+    llm_fail_fast: bool = False
 
     @property
     def llm_available(self) -> bool:
