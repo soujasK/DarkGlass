@@ -60,24 +60,28 @@ function Fact({ k, children }: { k: string; children: ReactNode }) {
 function AgentPicker() {
   const mode = useMeshStore((st) => st.agentMode);
   const model = useMeshStore((st) => st.health?.llm_model) ?? "Gemini";
+  const llmOff = useMeshStore((st) => st.health?.llm_available === false);
   const set = useMeshStore((st) => st.set);
   const opts: ["playbook" | "llm", string][] = [
     ["llm", prettyModel(model)],
     ["playbook", "Playbook"],
   ];
   return (
-    <div className="mt-5 flex items-center gap-1 font-sans text-[13px]">
+    <div className="mt-5 flex flex-wrap items-center gap-1 font-sans text-[13px]">
       <span className="mr-2 text-ink-3">Agent</span>
       {opts.map(([k, label]) => (
         <button
           key={k}
           type="button"
+          disabled={k === "llm" && llmOff}
+          title={k === "llm" && llmOff ? "Gemini is turned off on this public demo" : undefined}
           onClick={() => set({ agentMode: k })}
-          className={`rounded-full px-3 py-1 transition-colors ${mode === k ? "bg-white/[0.08] text-ink" : "text-ink-3 hover:text-ink"}`}
+          className={`whitespace-nowrap rounded-full px-3 py-1 transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${mode === k ? "bg-white/[0.08] text-ink" : "text-ink-3 hover:text-ink"}`}
         >
           {label}
         </button>
       ))}
+      {llmOff && <span className="mt-1.5 basis-full text-ink-3">Gemini is off on this demo; the Playbook runs the same FalkorDB tools</span>}
     </div>
   );
 }

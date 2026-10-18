@@ -135,6 +135,8 @@ export type Health = {
   jobs?: number;
   llm_provider?: string;
   llm_model?: string;
+  /** false on a server with Gemini turned off (a public demo): the Playbook agent still works */
+  llm_available?: boolean;
   flagship?: { name: string; gpus: number; sync_ms: number; jitter_ms: number } | null;
 };
 

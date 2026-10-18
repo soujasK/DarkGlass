@@ -28,14 +28,34 @@ async def _stream_engine_telemetry() -> None:
             await bus.publish("engine.stats", telemetry.snapshot())
 
 
+async def _reset_idle_incidents(minutes: float) -> None:
+    """Public demo: return to the start screen when an incident has been left alone for `minutes`."""
+    import time
+
+    from app.api.ws import bus
+    from app.services.chaos_engine import chaos
+
+    while True:
+        await asyncio.sleep(30)
+        inc = chaos.snapshot().get("incident")
+        if not inc or routes._agent_lock.locked():
+            continue
+        last = inc.get("resolved_at") or inc.get("agent_started_at") or inc["started_at"]
+        if time.time() - last > minutes * 60:
+            await bus.publish("reset", await asyncio.to_thread(chaos.reset))
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     from app.services.bootstrap import ensure_ready
 
     await asyncio.to_thread(ensure_ready)
-    task = asyncio.create_task(_stream_engine_telemetry())
+    tasks = [asyncio.create_task(_stream_engine_telemetry())]
+    if get_settings().idle_reset_minutes > 0:
+        tasks.append(asyncio.create_task(_reset_idle_incidents(get_settings().idle_reset_minutes)))
     yield
-    task.cancel()
+    for task in tasks:
+        task.cancel()
 
 
 api = FastAPI(title="DarkGlass control plane", version="1.0.0", lifespan=lifespan)

@@ -69,3 +69,11 @@ def test_generated_cypher_is_cleaned_and_bounded():
     q = _clean("```cypher\nMATCH (n) RETURN n;\n```")
     assert q.startswith("MATCH") and q.rstrip().endswith("LIMIT 25") and "```" not in q
     assert _clean("MATCH (n) RETURN n LIMIT 5").endswith("LIMIT 5")
+
+
+def test_llm_switch_for_a_public_demo():
+    from app.core.config import Settings
+
+    assert not Settings(llm_enabled=False, vertex_project_id="p").llm_available  # demo: Gemini off
+    assert not Settings(llm_provider="gemini", vertex_project_id=None).llm_available  # no project, no Gemini
+    assert Settings(llm_provider="gemini", vertex_project_id="p").llm_available

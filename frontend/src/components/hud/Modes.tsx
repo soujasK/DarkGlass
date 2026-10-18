@@ -190,6 +190,18 @@ export function AskPanel() {
   };
 
   const cols = result?.columns ?? [];
+  if (st.health?.llm_available === false) {
+    return (
+      <Shell wide>
+        <H1>Ask the graph</H1>
+        <Lead>
+          Ask the graph turns a plain-English question into read-only Cypher with Gemini. Gemini is turned off on this
+          public demo so visitors cannot spend its budget. Run DarkGlass locally with your own Vertex AI project to try it,
+          or watch it in the demo video.
+        </Lead>
+      </Shell>
+    );
+  }
   return (
     <Shell wide>
       {!result && !loading ? <H1>Ask the graph</H1> : null}

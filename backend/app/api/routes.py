@@ -86,7 +86,7 @@ def health() -> dict[str, Any]:
     s = get_settings()
     model = s.gemini_model if s.llm_provider == "gemini" else s.anthropic_model
     return {"falkordb": "up" if ok else "down", "graph": s.graph_name, "llm_provider": s.llm_provider,
-            "llm_model": model, **counts}
+            "llm_model": model, "llm_available": s.llm_available, **counts}
 
 
 @router.get("/engine")
@@ -183,6 +183,8 @@ async def agent_run(req: AgentRunRequest, background: BackgroundTasks) -> dict[s
         raise HTTPException(status_code=409, detail="incident already resolved; reset to run again")
     if _agent_lock.locked():
         raise HTTPException(status_code=409, detail="agent already running")
+    if req.mode == "llm" and not get_settings().llm_available:
+        raise HTTPException(status_code=503, detail="Gemini is turned off on this server; choose Playbook under Agent")
     cable_id = snap["incident"]["cable_id"]
 
     async def execute() -> dict[str, Any]:
@@ -301,6 +303,8 @@ async def ask_graph(req: AskRequest) -> dict[str, Any]:
 
     if not req.question.strip():
         raise HTTPException(status_code=400, detail="empty question")
+    if not get_settings().llm_available:
+        raise HTTPException(status_code=503, detail="Ask the graph needs Gemini, which is turned off on this server")
     try:
         return await asyncio.to_thread(ask, req.question.strip()[:400])
     except Exception as exc:

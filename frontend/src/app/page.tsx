@@ -51,6 +51,7 @@ function useBootstrap() {
           proof: { running: proof.running, stage: proof.stage, cableId: proof.cable_id, report: proof.report, error: proof.error },
         });
         const st = useMeshStore.getState();
+        if (health.llm_available === false && st.agentMode === "llm") set({ agentMode: "playbook" });
         if (!st.engine) {
           const engine = await api.engine();
           set({ engine, engineReceivedAt: performance.now() });

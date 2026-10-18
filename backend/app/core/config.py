@@ -49,6 +49,18 @@ class Settings(BaseSettings):
     vertex_project_id: str | None = None  # set DARKGLASS_VERTEX_PROJECT_ID in backend/.env
     vertex_region: str = "global"
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    # A public demo turns Gemini off (DARKGLASS_LLM_ENABLED=false) so visitors cannot spend the model budget;
+    # the Playbook agent, cuts, the planet scan and the proof need no model.
+    llm_enabled: bool = True
+    # A public demo returns to the start screen when an incident is left alone this long (0 = never).
+    idle_reset_minutes: float = 0
+
+    @property
+    def llm_available(self) -> bool:
+        """Whether the LLM agent and Ask the graph can run here."""
+        if not self.llm_enabled:
+            return False
+        return bool(self.vertex_project_id) if self.llm_provider == "gemini" else True
 
     @property
     def tau_ms_per_km(self) -> float:

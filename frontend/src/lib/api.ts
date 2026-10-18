@@ -1,5 +1,6 @@
 import type { BenchmarkReport, CableMeta, FaultCable, Health, LiveProof, Snapshot, Tunnel } from "./types";
 
+// An empty NEXT_PUBLIC_API_URL means the API is served from the page's own address (behind a proxy).
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8010";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -48,7 +49,8 @@ export const api = {
 };
 
 export function wsUrl() {
-  return API_URL.replace(/^http/, "ws") + "/ws";
+  const base = API_URL || window.location.origin;
+  return base.replace(/^http/, "ws") + "/ws";
 }
 
 export async function loadStatic<T>(name: string): Promise<T> {
