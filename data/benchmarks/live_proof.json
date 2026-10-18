@@ -1,17 +1,17 @@
 {
   "cable_id": "dunant",
   "cable_name": "Dunant",
-  "generated_at": "2026-10-18T05:57:58Z",
-  "duration_s": 42.6,
+  "generated_at": "2026-10-18T19:11:37Z",
+  "duration_s": 35.8,
   "runs": {
     "falkordb": 5,
     "networkx": 3,
     "sqlite": 1
   },
   "snapshot": {
-    "copy_ms": 1870.0,
+    "copy_ms": 2467.1,
     "severed_spans": 2,
-    "export_ms": 14178.6,
+    "export_ms": 11000.5,
     "edges": 260800
   },
   "parity": {
@@ -91,32 +91,32 @@
   },
   "engines": {
     "falkordb": {
-      "hurt_ms": 131.614,
-      "detour_ms": 64.475,
-      "hurt_engine_ms": 127.819,
-      "detour_engine_ms": 48.39,
-      "total_ms": 196.089
+      "hurt_ms": 119.917,
+      "detour_ms": 71.252,
+      "hurt_engine_ms": 111.053,
+      "detour_engine_ms": 46.637,
+      "total_ms": 191.169
     },
     "networkx": {
-      "hurt_ms": 1080.906,
-      "detour_ms": 84.167,
-      "total_ms": 1165.073
+      "hurt_ms": 732.981,
+      "detour_ms": 58.977,
+      "total_ms": 791.958
     },
     "sqlite": {
-      "hurt_ms": 484.859,
-      "detour_ms": 10032.284,
+      "hurt_ms": 290.332,
+      "detour_ms": 10024.556,
       "hurt_timed_out": false,
       "detour_timed_out": true,
-      "detour_hinted_ms": 102.017,
+      "detour_hinted_ms": 64.666,
       "detour_hinted_hops": 8,
-      "total_ms": 10517.143,
+      "total_ms": 10314.888,
       "timed_out": true
     }
   },
   "speedup": {
-    "vs_sqlite": 53.6,
+    "vs_sqlite": 54.0,
     "vs_sqlite_is_lower_bound": true,
     "sql_timeout_s": 10.0,
-    "vs_networkx": 5.9
+    "vs_networkx": 4.1
   }
 }
