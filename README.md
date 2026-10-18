@@ -278,7 +278,7 @@ The tests cover:
 **Deploy it (public demo).** `deploy/` runs the whole stack on one server: FalkorDB, the API, the web
 app and Caddy, which gets the HTTPS certificate by itself. Only ports 80 and 443 are open; FalkorDB and its
 Browser stay private. Gemini runs on a capped budget: 30 agent runs and 60 questions an hour for the whole
-site, 5 and 10 per visitor. Past the cap, a fix runs the Playbook, which uses the same FalkorDB tools, and says
+site. Past the cap, a fix runs the Playbook, which uses the same FalkorDB tools, and says
 so; Ask asks you to try later. Gemini signs in as the machine's own service account, so no key is stored, and
 `LLM_ENABLED=false` turns it off entirely. An incident left alone for 10 minutes resets, so each visitor starts
 clean.

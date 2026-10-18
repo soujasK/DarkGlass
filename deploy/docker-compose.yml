@@ -33,11 +33,9 @@ services:
       # instance metadata); it signs in as the machine's own service account, so no key is stored.
       DARKGLASS_LLM_ENABLED: ${LLM_ENABLED:-false}
       DARKGLASS_VERTEX_PROJECT_ID: ${VERTEX_PROJECT_ID:-}
-      # Hourly Gemini budget: whole site / per visitor. Over it, a fix falls back to the Playbook.
+      # Hourly Gemini budget for the whole site. Over it, a fix falls back to the Playbook.
       DARKGLASS_AGENT_HOURLY_LIMIT: "30"
-      DARKGLASS_AGENT_VISITOR_HOURLY_LIMIT: "5"
       DARKGLASS_ASK_HOURLY_LIMIT: "60"
-      DARKGLASS_ASK_VISITOR_HOURLY_LIMIT: "10"
       DARKGLASS_IDLE_RESET_MINUTES: "10"
 
   frontend:
