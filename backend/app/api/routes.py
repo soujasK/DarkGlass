@@ -370,6 +370,41 @@ async def ask_graph(req: AskRequest, request: Request) -> dict[str, Any]:
         raise HTTPException(status_code=502, detail=f"model call failed: {exc}") from exc
 
 
+@router.get("/queries/{tab}")
+def tab_queries(tab: str) -> dict[str, Any]:
+    """The exact queries behind the planet scan or the proof, read from the code that runs them."""
+    import textwrap
+
+    def q(name: str, does: str, text: str, language: str = "cypher") -> dict[str, str]:
+        return {"name": name, "does": does, "language": language, "text": textwrap.dedent(text).strip()}
+
+    if tab == "scan":
+        from app.services import resilience_scan as rs
+        return {"tab": "scan", "queries": [
+            q("GRAPH.COPY", "Clone the live graph into 4 sandbox graphs; the scan never touches the original",
+              "GRAPH.COPY darkglass_core darkglass_scan_0   (and _1, _2, _3)", "command"),
+            q("Cut", "Fail one cable inside a sandbox: its spans become :SEVERED_SPAN", rs.SEVER),
+            q("algo.WCC", "Connected components: which landing stations fall off the main network", rs.ISLANDS),
+            q("algo.SPpaths", "How much slower Ashburn to Dublin gets on the surviving glass", rs.SHORTEST),
+            q("GPU impact", "Which training jobs ride this cable", rs.GPU_IMPACT),
+            q("algo.maxFlow", "North America to Europe capacity left after the cut", rs.TRANSATLANTIC),
+            q("Restore", "Put the cable back before the next one is cut", rs.RESTORE),
+        ]}
+    if tab == "proof":
+        from app.services import live_proof as lp
+        from mcp_server.tools.blast_radius import IMPACT, PATH
+        from mcp_server.tools.detour_finder import SEARCH
+        return {"tab": "proof", "queries": [
+            q("GRAPH.COPY", "Snapshot the live graph so every engine answers the same cut", "GRAPH.COPY darkglass_core <sandbox>", "command"),
+            q("Who is hurt: FalkorDB", "The 11-hop path from the seabed to the training job", PATH),
+            q("Who is hurt: FalkorDB sweep", "Every GPU behind the cut, located to server, rack and hall", IMPACT),
+            q("Safest detour: FalkorDB", "algo.SPpaths over the masked optical layer", SEARCH),
+            q("Who is hurt: SQL", "The same question as joins in SQLite", lp.SQL_IMPACT, "sql"),
+            q("Safest detour: SQL", "A recursive CTE: it has to be told how deep to search", lp.SQL_DETOUR, "sql"),
+        ]}
+    raise HTTPException(status_code=404, detail="queries are listed for 'scan' and 'proof'")
+
+
 @router.get("/scan/latest")
 def scan_latest() -> dict[str, Any]:
     from app.services.resilience_scan import summary_from_graph

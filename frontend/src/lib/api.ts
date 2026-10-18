@@ -34,6 +34,8 @@ export const api = {
   latestScan: () => request<{ summary: import("@/store/useMeshStore").ScanSummary | null }>("/api/scan/latest"),
   ask: (question: string) =>
     request<import("@/store/useMeshStore").AskResult>("/api/ask", { method: "POST", body: JSON.stringify({ question }) }),
+  tabQueries: (tab: "scan" | "proof") =>
+    request<{ tab: string; queries: { name: string; does: string; language: string; text: string }[] }>(`/api/queries/${tab}`),
   engine: () => request<import("@/store/useMeshStore").EngineSnapshot>("/api/engine"),
   reset: () => request<Snapshot>("/api/reset", { method: "POST" }),
   benchmark: () =>

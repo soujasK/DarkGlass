@@ -5,7 +5,7 @@ import { api } from "@/lib/api";
 import type { BenchmarkReport, CypherTrace } from "@/lib/types";
 import { segments } from "@/lib/route";
 import { useAgentView } from "@/store/useAgentView";
-import { useMeshStore } from "@/store/useMeshStore";
+import { useMeshStore, type Mode } from "@/store/useMeshStore";
 
 /* ------------------------------------------------------------------ hop diagram */
 
@@ -323,11 +323,65 @@ function BenchmarkBody({
   );
 }
 
+/* ------------------------------------------------- other tabs: their own queries */
+
+type TabQuery = { name: string; does: string; language: string; text: string };
+
+/** The planet scan's or the proof's queries, as the backend runs them. */
+function TabQueries({ tab }: { tab: "scan" | "proof" }) {
+  const [queries, setQueries] = useState<TabQuery[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    setQueries(null);
+    api.tabQueries(tab).then((r) => setQueries(r.queries)).catch((e) => setError((e as Error).message));
+  }, [tab]);
+  if (error) return <div className="text-crimson">{error}</div>;
+  if (!queries) return <div className="text-muted">Loading the queries...</div>;
+  return (
+    <div className="space-y-5">
+      {queries.map((q) => (
+        <div key={q.name}>
+          <div className="flex items-baseline gap-3">
+            <span className="text-ink">{q.name}</span>
+            <span className="font-sans text-[12px] text-ink-3">{q.does}</span>
+            {q.language === "sql" && <span className="text-crimson/80">SQL</span>}
+          </div>
+          <pre className="mt-1.5 whitespace-pre-wrap rounded-lg bg-white/[0.03] p-3 text-[11px] leading-[16px] text-core/80">{q.text}</pre>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Ask the graph: the Cypher Gemini wrote for the last question. */
+function AskQuery() {
+  const result = useMeshStore((s) => s.askState.result);
+  if (!result?.cypher) return <div className="text-muted">Ask a question; the Cypher Gemini writes for it appears here.</div>;
+  return (
+    <div>
+      <div className="flex gap-6 font-sans text-[12px] text-ink-3 tabular-nums">
+        <span className="text-phosphor">FalkorDB {result.engine_ms?.toFixed(1)} ms</span>
+        <span>{result.row_count} {result.row_count === 1 ? "row" : "rows"}</span>
+        <span>read-only (GRAPH.RO_QUERY)</span>
+      </div>
+      <pre className="mt-3 whitespace-pre-wrap rounded-lg bg-white/[0.03] p-3 text-[11px] leading-[16px] text-core/80">{result.cypher}</pre>
+    </div>
+  );
+}
+
+const SUBTITLE: Record<Mode, string> = {
+  incident: "exact Cypher, parameters and benchmarks. Every figure is measured.",
+  scan: "the queries the planet scan runs for every one of the 603 cables",
+  ask: "the read-only Cypher Gemini wrote for your question",
+  proof: "the queries each engine runs on the same snapshot",
+};
+
 /* ------------------------------------------------------------------ drawer */
 
 export default function CuratorsDrawer() {
   const open = useMeshStore((s) => s.drawerOpen);
   const set = useMeshStore((s) => s.set);
+  const mode = useMeshStore((s) => s.mode);
   // FalkorDB Browser runs beside the database: reachable when the app runs locally, private on a public demo.
   const [local, setLocal] = useState(false);
   useEffect(() => setLocal(["localhost", "127.0.0.1"].includes(window.location.hostname)), []);
@@ -338,7 +392,7 @@ export default function CuratorsDrawer() {
     >
       <div className="flex items-center justify-between border-b border-white/[0.06] px-6 py-3">
         <span className="font-sans text-[14px] font-semibold tracking-[-0.01em] text-ink">Under the hood</span>
-        <span className="text-muted">exact Cypher, parameters and benchmarks. Every figure is measured.</span>
+        <span className="text-muted">{SUBTITLE[mode]}</span>
         {local ? (
         <span className="text-muted">
           <a
@@ -359,17 +413,26 @@ export default function CuratorsDrawer() {
           close
         </button>
       </div>
-      <div className="grid h-[calc(100%-41px)] grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1.35fr)] divide-x divide-white/[0.06]">
-        <div className="overflow-y-auto p-5">
-          <HopDiagram />
+      {mode === "incident" ? (
+        <div className="grid h-[calc(100%-41px)] grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1.35fr)] divide-x divide-white/[0.06]">
+          <div className="overflow-y-auto p-5">
+            <HopDiagram />
+          </div>
+          <div className="min-h-0 p-5">
+            <CypherPanel />
+          </div>
+          <div className="overflow-y-auto p-5">
+            <BenchmarkPanel />
+          </div>
         </div>
-        <div className="min-h-0 p-5">
-          <CypherPanel />
+      ) : (
+        <div className="grid h-[calc(100%-41px)] grid-cols-[minmax(0,2.25fr)_minmax(0,1.35fr)] divide-x divide-white/[0.06]">
+          <div className="overflow-y-auto p-5">{mode === "ask" ? <AskQuery /> : <TabQueries tab={mode} />}</div>
+          <div className="overflow-y-auto p-5">
+            <BenchmarkPanel />
+          </div>
         </div>
-        <div className="overflow-y-auto p-5">
-          <BenchmarkPanel />
-        </div>
-      </div>
+      )}
     </section>
   );
 }
