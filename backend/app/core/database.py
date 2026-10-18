@@ -114,7 +114,9 @@ def run(
     *,
     read_only: bool = False,
     graph: Graph | None = None,
+    track: bool = True,
 ) -> TimedResult:
+    """Run one query. track=False keeps the UI's own refresh queries off the engine bar."""
     g = graph or get_graph()
     params = params or {}
     t0 = time.perf_counter()
@@ -129,7 +131,8 @@ def run(
             stats[key] = val
     from app.core.telemetry import telemetry
 
-    telemetry.record(cypher, float(res.run_time_ms or 0.0), len(rows))
+    if track:
+        telemetry.record(cypher, float(res.run_time_ms or 0.0), len(rows))
     return TimedResult(
         rows=rows,
         engine_ms=float(res.run_time_ms or 0.0),

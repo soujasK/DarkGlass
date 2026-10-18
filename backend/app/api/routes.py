@@ -43,7 +43,14 @@ def _root_cause(exc: BaseException) -> str:
     """The MCP client wraps failures in task groups; show the operator the error underneath."""
     while isinstance(exc, BaseExceptionGroup) and exc.exceptions:
         exc = exc.exceptions[0]
-    return str(exc).split("\n")[0][:300] or type(exc).__name__
+    text = str(exc)
+    if "NOT_FOUND" in text and "models/" in text:
+        model = text.split("models/", 1)[1].split("`")[0].split("'")[0]
+        return f"Gemini model '{model}' is not available on this Google Cloud project"
+    if "PERMISSION_DENIED" in text or "DefaultCredentialsError" in type(exc).__name__ + text:
+        return "no access to Vertex AI; run `gcloud auth application-default login` and set the project"
+    first = text.split("\n")[0]
+    return (first if len(first) <= 200 else first[:200].rsplit(" ", 1)[0] + "...") or type(exc).__name__
 
 
 def _background(coro) -> None:
@@ -64,9 +71,16 @@ def health() -> dict[str, Any]:
                        ("active_spans", "MATCH ()-[r:OPTICAL_SPAN]->() RETURN count(r) AS n"),
                        ("jobs", "MATCH (j:TrainingJob) RETURN count(j) AS n")):
             try:
-                counts[key] = run(q, read_only=True).rows[0]["n"]
+                counts[key] = run(q, read_only=True, track=False).rows[0]["n"]
             except Exception:
                 counts[key] = None
+        try:  # the most critical job, for the start screen's headline
+            rows = run("""MATCH (j:TrainingJob) RETURN j.name AS name, j.gpu_count AS gpus,
+                          j.sync_interval_ms AS sync_ms, j.max_jitter_ms AS jitter_ms ORDER BY j.priority LIMIT 1""",
+                       read_only=True, track=False).rows
+            counts["flagship"] = rows[0] if rows else None
+        except Exception:
+            counts["flagship"] = None
     s = get_settings()
     model = s.gemini_model if s.llm_provider == "gemini" else s.anthropic_model
     return {"falkordb": "up" if ok else "down", "graph": s.graph_name, "llm_provider": s.llm_provider,
@@ -95,7 +109,7 @@ def tunnels() -> list[dict[str, Any]]:
                t.baseline_latency_ms AS baseline_latency_ms, t.current_latency_ms AS current_latency_ms,
                t.route_codes AS route_codes, t.route_span_ids AS route_span_ids, collect(cs.id) AS carried_by
         ORDER BY id
-    """, read_only=True).rows
+    """, read_only=True, track=False).rows
 
 
 @router.get("/cables")
@@ -106,7 +120,7 @@ def cables() -> list[dict[str, Any]]:
         RETURN cs.id AS id, cs.name AS name, collect(t.id) AS tunnels,
                collect(DISTINCT t.traffic_class) AS traffic_classes
         ORDER BY size(tunnels) DESC, name
-    """, read_only=True).rows
+    """, read_only=True, track=False).rows
 
 
 @router.get("/cables/catalog")
@@ -118,17 +132,17 @@ def cable_catalog() -> list[dict[str, Any]]:
                c.capacity_model AS capacity_model, c.ready_for_service AS rfs, c.owners AS owners,
                c.scan_risk AS risk, c.scan_rank AS risk_rank, c.scan_isolated_countries AS isolates,
                c.scan_capacity_loss_tbps AS atlantic_loss_tbps, c.scan_gpus_at_risk AS gpus_at_risk
-    """, read_only=True).rows
+    """, read_only=True, track=False).rows
     landings = {r["cid"]: r for r in run("""
         MATCH (a:LandingStation)-[r:OPTICAL_SPAN|SEVERED_SPAN]->()
         WHERE r.medium = 'SUBSEA'
         WITH r.cable_id AS cid, collect(DISTINCT a.name) AS stations, collect(DISTINCT a.country_name) AS countries
         RETURN cid, stations, countries
-    """, read_only=True).rows}
+    """, read_only=True, track=False).rows}
     traffic = {r["cid"]: r["classes"] for r in run("""
         MATCH (t:LogicalTunnel)-[:CARRIED_BY]->(c:CableSystem)
         RETURN c.id AS cid, collect(DISTINCT t.traffic_class) AS classes
-    """, read_only=True).rows}
+    """, read_only=True, track=False).rows}
     out = []
     for p in props:
         land = landings.get(p["id"], {})
@@ -247,6 +261,9 @@ async def proof_live_run(req: ProofRequest) -> dict[str, Any]:
 
 @router.post("/reset")
 async def reset() -> dict[str, Any]:
+    if _agent_lock.locked():
+        # Resetting under a running agent lets it write its reroute into a graph that was just restored.
+        raise HTTPException(status_code=409, detail="the agent is still working; reset when it finishes")
     snap = await asyncio.to_thread(chaos.reset)
     await bus.publish("reset", snap)
     return snap
