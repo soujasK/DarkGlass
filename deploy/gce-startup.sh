@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Google Compute Engine startup script for the DarkGlass public demo (Debian 12). It runs on every boot
-# and is safe to repeat: install Docker once, fetch the repo once, then start the stack.
+# and is safe to repeat: install Docker once, fetch or update the repo, then start the stack.
 # The hostname is the instance's "domain" metadata if set, else <external-ip>.sslip.io, a free DNS name
 # that resolves to the IP inside it, so Caddy can get a real HTTPS certificate without buying a domain.
 set -euo pipefail
@@ -18,7 +18,7 @@ fi
 
 REPO=$(meta instance/attributes/repo); REPO=${REPO:-https://github.com/soujasK/DarkGlass.git}
 DIR=/opt/darkglass
-[ -d "$DIR/.git" ] || git clone --depth 1 "$REPO" "$DIR"
+if [ -d "$DIR/.git" ]; then git -C "$DIR" pull --ff-only; else git clone --depth 1 "$REPO" "$DIR"; fi
 
 DOMAIN=$(meta instance/attributes/domain)
 if [ -z "$DOMAIN" ]; then

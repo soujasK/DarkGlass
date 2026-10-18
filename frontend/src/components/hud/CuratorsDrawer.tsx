@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 import type { BenchmarkReport, CypherTrace } from "@/lib/types";
 import { segments } from "@/lib/route";
@@ -328,6 +328,9 @@ function BenchmarkBody({
 export default function CuratorsDrawer() {
   const open = useMeshStore((s) => s.drawerOpen);
   const set = useMeshStore((s) => s.set);
+  // FalkorDB Browser runs beside the database: reachable when the app runs locally, private on a public demo.
+  const [local, setLocal] = useState(false);
+  useEffect(() => setLocal(["localhost", "127.0.0.1"].includes(window.location.hostname)), []);
   return (
     <section
       className={`absolute inset-x-4 bottom-0 z-40 h-[52vh] rounded-t-2xl border border-b-0 border-white/[0.07] bg-horizon/55 font-mono text-hud backdrop-blur-2xl transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${open ? "translate-y-0" : "translate-y-full"}`}
@@ -336,6 +339,7 @@ export default function CuratorsDrawer() {
       <div className="flex items-center justify-between border-b border-white/[0.06] px-6 py-3">
         <span className="font-sans text-[14px] font-semibold tracking-[-0.01em] text-ink">Under the hood</span>
         <span className="text-muted">exact Cypher, parameters and benchmarks. Every figure is measured.</span>
+        {local ? (
         <span className="text-muted">
           <a
             href="http://localhost:3001"
@@ -348,6 +352,9 @@ export default function CuratorsDrawer() {
           </a>
           {" "}· log in with the defaults, pick darkglass_core
         </span>
+        ) : (
+          <span className="text-muted">FalkorDB Browser: run DarkGlass locally (README, Run it)</span>
+        )}
         <button type="button" className="text-muted hover:text-ink" onClick={() => set({ drawerOpen: false })}>
           close
         </button>
