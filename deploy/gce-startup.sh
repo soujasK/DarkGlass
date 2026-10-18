@@ -34,6 +34,11 @@ VERTEX_PROJECT_ID=""
 if [ "$LLM_ENABLED" = "true" ]; then VERTEX_PROJECT_ID=$(meta project/project-id); fi
 echo "gemini: $LLM_ENABLED"
 
+# The project blog, served by Caddy at blog.$DOMAIN.
+BLOG_REPO=$(meta instance/attributes/blog_repo); BLOG_REPO=${BLOG_REPO:-https://github.com/soujasK/darkglass-blog.git}
+BLOG_DIR=/opt/darkglass-blog
+if [ -d "$BLOG_DIR/.git" ]; then git -C "$BLOG_DIR" pull --ff-only; else git clone --depth 1 "$BLOG_REPO" "$BLOG_DIR"; fi
+
 cd "$DIR"
-DOMAIN="$DOMAIN" LLM_ENABLED="$LLM_ENABLED" VERTEX_PROJECT_ID="$VERTEX_PROJECT_ID" docker compose -f deploy/docker-compose.yml up -d --build
+DOMAIN="$DOMAIN" LLM_ENABLED="$LLM_ENABLED" VERTEX_PROJECT_ID="$VERTEX_PROJECT_ID" BLOG_DIR="$BLOG_DIR" docker compose -f deploy/docker-compose.yml up -d --build
 echo "== $(date -Is) DarkGlass is starting at https://$DOMAIN"
