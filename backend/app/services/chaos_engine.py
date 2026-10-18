@@ -168,6 +168,13 @@ class ChaosEngine:
             self.incident["agent"] = None
             return self.snapshot()
 
+    def mark_agent_failed(self) -> dict[str, Any]:
+        """The run errored: the incident is still open and can be fixed again."""
+        with self._lock:
+            if self.incident is not None:
+                self.incident["agent_started_at"] = None
+            return self.snapshot()
+
     def resolve(self, agent_result: dict[str, Any]) -> dict[str, Any]:
         with self._lock:
             if self.incident is None:

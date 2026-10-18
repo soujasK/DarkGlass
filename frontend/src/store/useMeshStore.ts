@@ -178,10 +178,17 @@ export const useMeshStore = create<MeshState>((set, get) => ({
     if (!s.incident) {
       extra.detour = null;
       extra.detourIgnitedAt = null;
-    } else if (persisted?.restored && persisted.detour && !st.detour && !st.agentRunning && !st.queue.length) {
-      // Page loaded after the agent already ran: show the corridor without replaying.
-      extra.detour = persisted.detour;
-      extra.detourIgnitedAt = performance.now();
+    } else if (persisted && !st.agentResult && !st.agentRunning && !st.queue.length) {
+      // Page loaded after the agent already ran: show its result and corridor without replaying.
+      extra.agentResult = persisted;
+      extra.steps = (persisted.steps ?? []).map((x, i) => ({ step: i + 1, tool: x.tool, result: x.result }));
+      if (persisted.restored && persisted.detour) {
+        extra.detour = persisted.detour;
+        extra.detourIgnitedAt = performance.now();
+      }
+    } else if (!persisted && s.incident.agent_started_at && !st.agentRunning) {
+      // Page loaded while the agent is running: its remaining events fill the screen in.
+      extra.agentRunning = true;
     }
     set({ snapshot: s, clockOffset: s.server_time - Date.now() / 1000, ...extra });
   },
@@ -228,7 +235,8 @@ export const useMeshStore = create<MeshState>((set, get) => ({
         });
         break;
       case "agent.error":
-        set({ agentRunning: false, notice: `agent error: ${p.error}. Pick Playbook to run without Gemini.` });
+        // Drop the partial run so the screen goes back to the fix button and the agent picker.
+        set({ agentRunning: false, steps: [], thoughts: [], notice: `agent error: ${p.error}. Pick Playbook to run without Gemini.` });
         break;
       default:
         break;

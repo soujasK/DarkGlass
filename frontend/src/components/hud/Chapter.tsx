@@ -270,7 +270,9 @@ export default function Chapter() {
         <h1 className={`mt-3 ${H1}`}>No GPUs frozen.</h1>
         <p className={LINE}>
           {inc.blast_radius?.affected_tunnels?.length
-            ? "Backup traffic needs a new path."
+            ? `${[...new Set(inc.blast_radius.affected_tunnels.map((t: any) => CLASS_LABEL[t.traffic_class] ?? t.traffic_class))]
+                .join(" and ")
+                .replace(/^./, (c: string) => c.toUpperCase())} needs a new path.`
             : (() => {
                 const meta = st.catalog.find((c) => c.id === inc.cable_id);
                 if (meta?.isolates.length) return `But it isolates stations in ${meta.isolates.join(", ")}.`;
@@ -355,10 +357,22 @@ export default function Chapter() {
       </>
     );
   } else if (phase === "failed") {
+    // Say what actually stopped the fix: only a failed route search means "no safe detour".
+    const reason = result?.reason ?? "";
+    const noRoute = /^no SRLG-isolated path/.test(reason);
     body = (
       <>
-        <div className="font-sans text-[17px] text-crimson">No safe detour.</div>
-        <h1 className={`mt-3 ${H1}`}>Nothing fits the budget.</h1>
+        <div className="font-sans text-[17px] text-crimson">{noRoute ? "No safe detour." : "Not fixed."}</div>
+        <h1 className={`mt-3 ${H1}`}>{noRoute ? "Nothing fits the budget." : "The agent stopped."}</h1>
+        {reason && <p className={LINE}>{reason.charAt(0).toUpperCase() + reason.slice(1)}.</p>}
+        {!noRoute && (
+          <>
+            <Primary tone="amber" onClick={fix}>
+              Try again
+            </Primary>
+            <AgentPicker />
+          </>
+        )}
         {tryAnother}
       </>
     );

@@ -39,6 +39,13 @@ _agent_lock = asyncio.Lock()
 _tasks: set[asyncio.Task] = set()
 
 
+def _root_cause(exc: BaseException) -> str:
+    """The MCP client wraps failures in task groups; show the operator the error underneath."""
+    while isinstance(exc, BaseExceptionGroup) and exc.exceptions:
+        exc = exc.exceptions[0]
+    return str(exc).split("\n")[0][:300] or type(exc).__name__
+
+
 def _background(coro) -> None:
     """Run a coroutine in the background. The loop only holds tasks weakly, so keep a reference until it ends."""
     task = asyncio.create_task(coro)
@@ -168,7 +175,9 @@ async def agent_run(req: AgentRunRequest, background: BackgroundTasks) -> dict[s
             try:
                 result = await (run_llm if req.mode == "llm" else run_playbook)(cable_id, bus.publish)
             except Exception as exc:  # surface the failure to the UI instead of hanging it
-                await bus.publish("agent.error", {"error": str(exc)})
+                log.exception("agent run failed for %s", cable_id)
+                await bus.publish("state", chaos.mark_agent_failed())
+                await bus.publish("agent.error", {"error": _root_cause(exc)})
                 raise
             final = chaos.resolve(result)
             await bus.publish("state", final)
