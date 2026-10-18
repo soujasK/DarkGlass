@@ -276,7 +276,17 @@ frontend/src/            Next.js + react-three-fiber globe, mode screens, Falkor
 
 ## AI assistance
 
-This project was built with help from AI coding assistants (Anthropic's Claude, via Claude Code),
-which wrote much of the code and documentation under the author's direction. At runtime, Gemini 3.8
-Flash on Vertex AI is optional: it powers the LLM agent mode and Ask the graph. Everything else is
-deterministic code and FalkorDB queries.
+**During development:** Claude Code was used as a coding assistant, under the author's direction. The
+author reviewed and tested the work: every number on screen was checked against the graph, and the
+test suite and the Ask-the-graph eval run against a live FalkorDB.
+
+**At runtime, AI is used in exactly two places, and both are optional:**
+
+- **LLM agent mode:** Gemini 3.8 Flash chooses which of the four tools to call, over MCP.
+- **Ask the graph:** Gemini 3.8 Flash turns a plain-English question into a read-only Cypher query.
+
+Everything else involves no AI model: the Playbook agent, cuts, the planet scan, the live proof, and
+every number on screen. That is ordinary code that gives the same result every time, and FalkorDB
+does the actual work: the 11-hop traversal, `algo.SPpaths`, `algo.betweenness`, `algo.WCC` and
+`algo.maxFlow`. Even when Gemini picks the tools, the answers come from the graph: in our Gemini
+runs the whole fix took 35 to 50 s, and FalkorDB's share was under half a second.
