@@ -289,7 +289,7 @@ function Bars({ title, rows, answer, note }: { title: string; rows: Row[]; answe
           </div>
           <div className="mt-1.5 h-[3px] rounded-full bg-white/[0.05]">
             <div
-              className={`h-full rounded-full ${row.hero ? "bg-phosphor" : row.timeout ? "bg-crimson/50" : "bg-[#475569]"}`}
+              className={`h-full rounded-full ${row.hero ? "bg-phosphor" : row.timeout ? "bg-crimson/50" : "bg-[#F2F4F7]"}`}
               style={{ width: `${pct(row.ms)}%` }}
             />
           </div>

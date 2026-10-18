@@ -215,7 +215,7 @@ function Reasoning({ s }: { s: Story }) {
           <li
             key={q}
             className={`flex items-baseline justify-between border-t border-white/[0.06] py-3.5 transition-opacity duration-700 ${
-              step ? "opacity-100" : "opacity-60"
+              step ? "opacity-100" : "opacity-100"
             }`}
           >
             <span className="font-sans text-[15px] tracking-tight text-ink">{q}</span>

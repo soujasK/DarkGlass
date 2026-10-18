@@ -14,8 +14,9 @@ module.exports = {
         crimson: "#E5534B",
         silica: "#E6E8EB",
         // solid neutral text greys: crisper than translucent white over navy
-        ink: { DEFAULT: "#EEF0F3", 1: "#D2D7DD", 2: "#AFB6BF", 3: "#8F98A3", 4: "#7C8591" },
-        muted: "#8B95A3",
+        // text hierarchy by colour, not grey: white for content, steel blue for labels, pale blue for notes
+        ink: { DEFAULT: "#F2F4F7", 1: "#F2F4F7", 2: "#93BBEA", 3: "#B8D0EE", 4: "#B8D0EE" },
+        muted: "#93BBEA",
       },
       fontFamily: {
         mono: ["var(--font-mono)", "ui-monospace", "monospace"],

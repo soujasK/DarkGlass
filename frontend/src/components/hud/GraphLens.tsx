@@ -163,7 +163,7 @@ export default function GraphLens() {
 
         {/* tunnel */}
         <rect x={TUN.x - 14} y={TUN.y - 14} width={28} height={28} rx={3} fill="#02060F" stroke={nodeStroke} strokeWidth={1.2} transform={`rotate(45 ${TUN.x} ${TUN.y})`} className="transition-[stroke] duration-700" />
-        <text x={TUN.x} y={TUN.y + 38} textAnchor="middle" fontSize={11} fill="#8B95A3">
+        <text x={TUN.x} y={TUN.y + 38} textAnchor="middle" fontSize={11} fill="#F2F4F7">
           Tunnel
         </text>
 

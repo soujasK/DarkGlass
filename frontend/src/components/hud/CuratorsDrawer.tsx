@@ -158,7 +158,7 @@ function BarRow({ bar }: { bar: Bar }) {
       <span className={`w-44 shrink-0 truncate ${bar.subject ? "text-ink" : "text-muted"}`}>{bar.label}</span>
       <div className="relative h-[6px] flex-1">
         <div
-          className={`absolute left-0 top-0 h-full rounded-r ${bar.subject ? "bg-phosphor" : bar.timeout ? "bg-crimson/70" : "bg-[#475569]"}`}
+          className={`absolute left-0 top-0 h-full rounded-r ${bar.subject ? "bg-phosphor" : bar.timeout ? "bg-crimson/70" : "bg-[#F2F4F7]"}`}
           style={{ width: `${xPct(bar.p50)}%` }}
         />
       </div>
