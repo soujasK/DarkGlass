@@ -13,7 +13,7 @@ module.exports = {
         fault: "#1E293B",
         crimson: "#E5534B",
         silica: "#E6E8EB",
-        muted: "#64748B",
+        muted: "#8B95A3",
       },
       fontFamily: {
         mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"],

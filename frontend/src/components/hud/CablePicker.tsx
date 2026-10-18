@@ -82,9 +82,9 @@ export default function CablePicker({
       >
         <span className="min-w-0">
           <span className="block truncate font-sans text-[16px] tracking-tight text-silica">{selected?.name ?? "Choose a cable"}</span>
-          {selected && <span className="block truncate font-sans text-[12px] text-silica/60">{facts(selected)}</span>}
+          {selected && <span className="block truncate font-sans text-[12px] text-silica/75">{facts(selected)}</span>}
         </span>
-        <span className="ml-4 shrink-0 font-sans text-[12px] text-silica/60">{catalog.length} cables</span>
+        <span className="ml-4 shrink-0 font-sans text-[12px] text-silica/75">{catalog.length} cables</span>
       </button>
 
       {open && (
@@ -94,7 +94,7 @@ export default function CablePicker({
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search cable, owner, country or landing station"
-            className="w-full border-b border-white/[0.1] bg-[#111c30] px-4 py-3 font-sans text-[14px] text-silica placeholder:text-silica/30 focus:outline-none"
+            className="w-full border-b border-white/[0.1] bg-[#111c30] px-4 py-3 font-sans text-[14px] text-silica placeholder:text-silica/55 focus:outline-none"
           />
           <div className="max-h-[300px] overflow-y-auto py-1">
             {list.slice(0, 120).map((c) => (
@@ -110,10 +110,10 @@ export default function CablePicker({
               >
                 <span className="flex items-baseline justify-between gap-3">
                   <span className="truncate font-sans text-[14px] tracking-tight text-silica">{c.name}</span>
-                  <span className="shrink-0 font-sans text-[12px] tabular-nums text-silica/60">{facts(c)}</span>
+                  <span className="shrink-0 font-sans text-[12px] tabular-nums text-silica/75">{facts(c)}</span>
                 </span>
                 <span className="flex items-baseline justify-between gap-3">
-                  <span className="truncate font-sans text-[12px] text-silica/55">{c.countries.join(", ")}</span>
+                  <span className="truncate font-sans text-[12px] text-silica/70">{c.countries.join(", ")}</span>
                   {carries(c) ? (
                     <span className="shrink-0 font-sans text-[12px] text-amber-laser/80">{carries(c)}</span>
                   ) : c.isolates.length ? (
@@ -122,9 +122,9 @@ export default function CablePicker({
                 </span>
               </button>
             ))}
-            {!list.length && <div className="px-4 py-3 font-sans text-[13px] text-silica/40">No cable matches.</div>}
+            {!list.length && <div className="px-4 py-3 font-sans text-[13px] text-silica/60">No cable matches.</div>}
             {list.length > 120 && (
-              <div className="px-4 py-2 font-sans text-[12px] text-silica/30">{list.length - 120} more, refine the search</div>
+              <div className="px-4 py-2 font-sans text-[12px] text-silica/55">{list.length - 120} more, refine the search</div>
             )}
           </div>
         </div>
@@ -146,7 +146,7 @@ export function CableCard({ id }: { id: string | null }) {
     <div className="mt-4 w-[460px] space-y-1.5 font-sans text-[13px]">
       {rows.map(([k, v]) => (
         <div key={k} className="grid grid-cols-[96px_1fr] gap-3">
-          <span className="text-silica/55">{k}</span>
+          <span className="text-silica/70">{k}</span>
           <span className="truncate text-silica" title={v}>
             {v}
           </span>

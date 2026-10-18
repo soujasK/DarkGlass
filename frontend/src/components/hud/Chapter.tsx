@@ -8,7 +8,7 @@ import { TOOL_ORDER, placeName, useStory, type Story } from "@/store/useStory";
 import CablePicker, { CableCard } from "./CablePicker";
 import Roll from "./Roll";
 
-const QUESTIONS = ["Who is hurt?", "Find a safe detour.", "Check for bottlenecks.", "Move the traffic."];
+const QUESTIONS = ["Who is hurt?", "Find a safe detour", "Check for bottlenecks", "Move the traffic"];
 /** "gemini-3.8-flash" -> "Gemini 3.8 Flash" */
 const prettyModel = (m?: string) =>
   (m ?? "gemini").split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
@@ -17,7 +17,7 @@ const money = (v: number, dp = 2) =>
   `$${v.toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp })}`;
 
 const H1 = "display-h1 font-sans font-semibold tracking-[-0.04em] text-silica";
-const LINE = "gap-line font-sans text-[17px] leading-[26px] text-silica/55";
+const LINE = "gap-line font-sans text-[17px] leading-[26px] text-silica/70";
 
 function Primary({ children, onClick, tone }: { children: ReactNode; onClick: () => void; tone: "crimson" | "amber" }) {
   const cls =
@@ -38,7 +38,7 @@ function Primary({ children, onClick, tone }: { children: ReactNode; onClick: ()
 /** One line of state: a coloured dot and a plain sentence. */
 function Status({ children, dot }: { children: ReactNode; dot: string }) {
   return (
-    <div className="flex items-center gap-2 font-sans text-[14px] text-silica/70">
+    <div className="flex items-center gap-2 font-sans text-[14px] text-silica/80">
       <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`} />
       {children}
     </div>
@@ -49,7 +49,7 @@ function Status({ children, dot }: { children: ReactNode; dot: string }) {
 function Fact({ k, children }: { k: string; children: ReactNode }) {
   return (
     <>
-      <dt className="text-silica/45">{k}</dt>
+      <dt className="text-silica/65">{k}</dt>
       <dd className="text-silica/85">{children}</dd>
     </>
   );
@@ -66,13 +66,13 @@ function AgentPicker() {
   ];
   return (
     <div className="mt-5 flex items-center gap-1 font-sans text-[13px]">
-      <span className="mr-2 text-silica/35">Agent</span>
+      <span className="mr-2 text-silica/55">Agent</span>
       {opts.map(([k, label]) => (
         <button
           key={k}
           type="button"
           onClick={() => set({ agentMode: k })}
-          className={`rounded-full px-3 py-1 transition-colors ${mode === k ? "bg-white/[0.08] text-silica" : "text-silica/40 hover:text-silica"}`}
+          className={`rounded-full px-3 py-1 transition-colors ${mode === k ? "bg-white/[0.08] text-silica" : "text-silica/60 hover:text-silica"}`}
         >
           {label}
         </button>
@@ -124,11 +124,11 @@ function AgentTrail({ s }: { s: Story }) {
   const summary = s.result?.summary?.trim();
   if (!s.steps.length) return null;
   return (
-    <div className="mt-4 max-w-[500px] font-sans text-[13px] text-silica/45">
+    <div className="mt-4 max-w-[500px] font-sans text-[13px] text-silica/65">
       <span>{s.result?.mode === "llm" ? "Tools Gemini chose:" : "Tools run:"} </span>
       {s.steps.map((step, i) => (
         <span key={step.step}>
-          {i > 0 && <span className="text-silica/25"> → </span>}
+          {i > 0 && <span className="text-silica/50"> → </span>}
           <button
             type="button"
             title="open the Cypher"
@@ -142,7 +142,7 @@ function AgentTrail({ s }: { s: Story }) {
       ))}
       {summary && (
         <div className="relative mt-2">
-          <button type="button" onClick={() => setOpen((o) => !o)} className="text-silica/60 hover:text-silica">
+          <button type="button" onClick={() => setOpen((o) => !o)} className="text-silica/75 hover:text-silica">
             {open ? "Hide" : "Read"} Gemini&apos;s summary
           </button>
           {open && (
@@ -213,12 +213,12 @@ function Reasoning({ s }: { s: Story }) {
           <li
             key={q}
             className={`flex items-baseline justify-between border-t border-white/[0.06] py-3.5 transition-opacity duration-700 ${
-              step ? "opacity-100" : "opacity-25"
+              step ? "opacity-100" : "opacity-60"
             }`}
           >
             <span className="font-sans text-[15px] tracking-tight text-silica">{q}</span>
             <span className="flex items-baseline gap-4">
-              <span className="font-sans text-[13px] text-silica/45">{r ? answer(i, s) : ""}</span>
+              <span className="font-sans text-[13px] text-silica/65">{r ? answer(i, s) : ""}</span>
               {r ? (
                 <button
                   type="button"
@@ -312,7 +312,7 @@ export default function Chapter() {
             </Fact>
           )}
         </dl>
-        <p className="mt-3 font-sans text-[13px] text-silica/35">A modelled cluster on the real TeleGeography cable map.</p>
+        <p className="mt-3 font-sans text-[13px] text-silica/55">A modelled cluster on the real TeleGeography cable map.</p>
 
         <div className="gap-section">
           <div>
@@ -329,13 +329,13 @@ export default function Chapter() {
     body = s.stalls ? (
       <>
         <Status dot="bg-crimson">{inc.cable_name} is cut. Gradient sync has stalled.</Status>
-        <div className="mt-6 font-sans text-[13px] text-silica/45">Estimated cost so far</div>
+        <div className="mt-6 font-sans text-[13px] text-silica/65">Estimated cost so far</div>
         <div className="display-money mt-1 font-sans font-semibold tracking-[-0.04em] text-crimson">
           <Roll text={money(s.lossUsd)} />
         </div>
         <p className={LINE}>
           {s.gpus.toLocaleString()} GPUs frozen.{" "}
-          <span className="text-silica/35">Cost at an estimated {money(s.ratePerSec * 3600, 0)} an hour.</span>
+          <span className="text-silica/55">Cost at an estimated {money(s.ratePerSec * 3600, 0)} an hour.</span>
         </p>
         <Memory history={inc.blast_radius?.history} cable={inc.cable_name} />
         <Primary tone="amber" onClick={fix}>
@@ -406,13 +406,13 @@ export default function Chapter() {
           <p className={LINE}>
             Now on {s.cableName(crossing.cable)}, {delta <= 0 ? `${Math.abs(delta).toFixed(1)} ms faster` : `+${delta.toFixed(1)} ms`}.
             {result.mode === "llm" && (
-              <span className="text-silica/35">
+              <span className="text-silica/55">
                 {" "}Decided by {prettyModel(st.health?.llm_model)} over MCP; FalkorDB did the work in {Math.round(result.graph_engine_ms)} ms.
               </span>
             )}
           </p>
         )}
-        {why(s) && <p className="mt-3 max-w-[480px] font-sans text-[14px] leading-[21px] text-silica/45">{why(s)}</p>}
+        {why(s) && <p className="mt-3 max-w-[480px] font-sans text-[14px] leading-[21px] text-silica/65">{why(s)}</p>}
         {!!result.still_down?.length && (
           <p className="mt-3 max-w-[480px] font-sans text-[14px] leading-[21px] text-crimson/80">
             Not fixed yet: {[...new Set(result.still_down.map((t) => CLASS_LABEL[t.traffic_class] ?? t.traffic_class))].join(" and ")}{" "}
@@ -424,7 +424,7 @@ export default function Chapter() {
           {stats.map(([v, k]) => (
             <div key={k}>
               <div className="font-sans text-[30px] font-semibold tracking-[-0.03em] text-silica">{v}</div>
-              <div className="mt-1 font-sans text-[13px] text-silica/40">{k}</div>
+              <div className="mt-1 font-sans text-[13px] text-silica/60">{k}</div>
             </div>
           ))}
         </div>

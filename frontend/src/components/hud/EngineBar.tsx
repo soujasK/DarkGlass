@@ -13,8 +13,7 @@ const LABEL: Record<string, string> = {
   wcc: "WCC",
   maxflow: "maxFlow",
   copy: "GRAPH.COPY",
-  mutation: "Mutations",
-  index: "Index lookups",
+  mutation: "Writes",
   text2cypher: "Text to Cypher",
 };
 
@@ -40,7 +39,7 @@ export default function EngineBar() {
         type="button"
         onClick={() => set({ drawerOpen: true })}
         title="FalkorDB queries DarkGlass has run in this scope, by kind of work (the screen's own refresh queries are not counted). Click to see the queries."
-        className="flex w-full flex-wrap items-baseline gap-x-5 gap-y-1 border-t border-white/[0.07] pt-3 text-left font-sans text-[12px] text-silica/40 transition-colors hover:text-silica/60"
+        className="flex w-full flex-wrap items-baseline gap-x-5 gap-y-1 border-t border-white/[0.07] pt-3 text-left font-sans text-[12px] text-silica/60 transition-colors hover:text-silica/75"
       >
         <span className="font-medium text-silica/75">FalkorDB</span>
         <span className="tabular-nums">
@@ -48,18 +47,20 @@ export default function EngineBar() {
         </span>
         {(engine?.capabilities ?? []).map((c) => {
           const n = Math.max(0, c.calls - (base?.by[c.key] ?? 0));
+          // Only the work that actually ran; index lookups overlap the other counts, so they are not listed.
+          if (!n || c.key === "index") return null;
           const hot = c.age_s !== null && c.age_s + since < HOT_S && n > 0;
           return (
             <span
               key={c.key}
               title={`${c.name}: ${c.does}`}
-              className={`transition-colors duration-300 ${hot ? "text-phosphor" : n ? "text-silica/60" : "text-silica/25"}`}
+              className={`transition-colors duration-300 ${hot ? "text-phosphor" : "text-silica/75"}`}
             >
               {LABEL[c.key] ?? c.name} <span className="tabular-nums">{fmtCount(n)}</span>
             </span>
           );
         })}
-        <span className="ml-auto text-silica/35">View queries</span>
+        <span className="ml-auto text-silica/55">View queries</span>
       </button>
     </footer>
   );

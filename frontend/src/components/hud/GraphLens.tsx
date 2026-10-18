@@ -97,13 +97,13 @@ export default function GraphLens() {
       {traced && traversal && (
         <div className="chapter-in mb-4">
           <div className="font-sans text-[13px] font-medium text-silica/85">
-            {traversal.hops}-hop traversal in FalkorDB <span className="font-normal text-silica/45">· {traversal.engine_ms.toFixed(1)} ms</span>
+            {traversal.hops}-hop traversal in FalkorDB <span className="font-normal text-silica/65">· {traversal.engine_ms.toFixed(1)} ms</span>
           </div>
           <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 font-mono text-[12px] leading-[19px]">
             {traversal.nodes.map((n: string, i: number) => (
               <span key={i} className="flex items-baseline gap-2">
                 {i > 0 && (
-                  <span className="text-[10.5px] text-silica/45">
+                  <span className="text-[10.5px] text-silica/65">
                     {(traversal.forward?.[i - 1] ?? i === 1) ? `${traversal.rels[i - 1]}→` : `←${traversal.rels[i - 1]}`}
                   </span>
                 )}
@@ -114,7 +114,7 @@ export default function GraphLens() {
             ))}
           </div>
           {impact?.gpus > 0 && (
-            <div className="mt-3 flex gap-5 font-sans text-[12.5px] text-silica/60">
+            <div className="mt-3 flex gap-5 font-sans text-[12.5px] text-silica/75">
               {([[impact.gpus, "GPUs"], [impact.servers, "servers"], [impact.racks, "racks"], [impact.halls, "halls"]] as [number, string][]).map(([n, l]) => (
                 <span key={l}><span className="text-crimson">{n.toLocaleString()}</span> {l}</span>
               ))}
@@ -161,7 +161,7 @@ export default function GraphLens() {
 
         {/* tunnel */}
         <rect x={TUN.x - 14} y={TUN.y - 14} width={28} height={28} rx={3} fill="#02060F" stroke={nodeStroke} strokeWidth={1.2} transform={`rotate(45 ${TUN.x} ${TUN.y})`} className="transition-[stroke] duration-700" />
-        <text x={TUN.x} y={TUN.y + 38} textAnchor="middle" fontSize={11} fill="#64748B">
+        <text x={TUN.x} y={TUN.y + 38} textAnchor="middle" fontSize={11} fill="#8B95A3">
           Tunnel
         </text>
 
@@ -194,7 +194,7 @@ export default function GraphLens() {
         )}
 
       </svg>
-      <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 border-t border-white/[0.06] pt-3 font-sans text-[12px] text-silica/55">
+      <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 border-t border-white/[0.06] pt-3 font-sans text-[12px] text-silica/70">
         {([[CYAN, "Live cable or link"], [CRIMSON, "Cut, or in the cut's trench"], [AMBER, "Detour the agent chose"]] as [string, string][]).map(([c, l]) => (
           <span key={l} className="flex items-center gap-2">
             <span className="inline-block h-[2px] w-4 rounded" style={{ background: c }} />
