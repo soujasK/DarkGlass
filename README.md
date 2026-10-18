@@ -175,20 +175,47 @@ says so.
 
 ## Run it
 
-Prerequisites: Docker, Python 3.11+, Node 20+.
+**You need:** Git, [Docker Desktop](https://www.docker.com/products/docker-desktop/) (running, with about
+2 GB of memory free), Python 3.11 or newer, and Node.js 20 or newer. No accounts or API keys are
+needed: the cable data is in the repo, and the Playbook agent needs no AI service.
 
 ```bash
-powershell -ExecutionPolicy Bypass -File .\start.ps1     # Windows
+git clone https://github.com/soujasK/DarkGlass.git
+cd DarkGlass
+powershell -ExecutionPolicy Bypass -File .\start.ps1     # Windows (PowerShell)
 ./start.sh                                                # macOS / Linux
 ```
 
-This one command starts FalkorDB, installs whatever is missing, downloads and builds the data on
-the first run (a few minutes), and opens http://localhost:3000. On every start, the backend
-self-checks: it loads the graph if FalkorDB is empty and restores any incident a previous process
-left half-finished. FalkorDB data lives on a Docker volume.
+The script:
+1. starts FalkorDB and FalkorDB Browser with `docker compose`;
+2. creates `backend/.venv` and installs the Python packages;
+3. installs and builds the frontend;
+4. starts the API (port 8010) and the app (port 3000).
 
-Ports: frontend 3000, API 8010, FalkorDB 6390, FalkorDB browser 3001. They are deliberately not
-8000 or 6379, to avoid clashing with local services.
+**First run:** about 5 to 10 minutes, mostly package installs. When the API first starts it loads
+the graph into FalkorDB (about 166,000 nodes, under a minute). If http://localhost:3000 opens before
+that finishes, wait a moment and refresh. Later runs start in seconds; the graph is kept on a Docker
+volume.
+
+**Try it without Gemini:** under **Agent**, choose **Playbook**, pick a cable and cut it. Planet scan,
+Proof and the FalkorDB Browser also work without Gemini. Only Ask the graph needs it (below).
+
+**Stop:** on Windows, close the two server windows; on macOS / Linux, press Ctrl+C. Then
+`docker compose down` stops FalkorDB (the data stays).
+
+Ports: app 3000, API 8010, FalkorDB 6390, FalkorDB Browser 3001. They are deliberately not 8000 or
+6379, to avoid clashing with local services. Use the included `docker-compose.yml` for FalkorDB: it
+raises the per-query time limit to 15 s. FalkorDB's own default (1 s) is too short for the first
+graph load and the planet scan.
+
+**If something goes wrong:**
+- *"docker: command not found" or "Cannot connect to the Docker daemon"*: start Docker Desktop and run
+  the script again.
+- *"port is already allocated"*: another program uses 3000, 3001, 6390 or 8010. Stop it, then run the
+  script again.
+- *"python" not found on Windows*: install Python from python.org and tick "Add python.exe to PATH".
+- *The app says "Offline" (top right)*: the API is still loading the graph on first run. Wait about a
+  minute; it reconnects by itself.
 
 **FalkorDB Browser.** Open http://localhost:3001, or "Open in FalkorDB Browser" in the app's
 "Under the hood" drawer. On the login page keep the defaults (host `localhost`, port `6379`: the
@@ -226,10 +253,10 @@ The tests cover:
   tunnels
 - the Ask-the-graph eval's reference answers and scorer
 
-**Manual setup**: `docker compose up -d`; then, in `backend/`, create a venv and
-`pip install -r requirements.txt`, run `python -m app.ingestion.fetch_telegeography` and
-`python -m app.ingestion.import_telegeography`, then `uvicorn app.main:app --port 8010`. In
-`frontend/`, run `npm install && npm run build && npm start`.
+**Manual setup** (what the scripts do): `docker compose up -d`; then in `backend/`:
+`python -m venv .venv`, activate it, `pip install -r requirements.txt`,
+`uvicorn app.main:app --port 8010`. In `frontend/`: `npm install && npm run build && npm start`.
+The API builds the graph on its first start.
 
 ## The agent and the MCP server
 
