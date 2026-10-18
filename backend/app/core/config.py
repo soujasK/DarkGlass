@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     anthropic_model: str = "claude-opus-5-5"
     # "gemini" runs Google Gemini on Vertex AI (same ADC credentials and project as "vertex").
     llm_provider: str = "gemini"
-    gemini_model: str = "gemini-4-argon"
+    gemini_model: str = "gemini-3.8-flash"  # also used by Ask the graph; gemini-4-argon was too slow on Vertex
     vertex_project_id: str | None = None  # set DARKGLASS_VERTEX_PROJECT_ID in backend/.env
     vertex_region: str = "global"
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]

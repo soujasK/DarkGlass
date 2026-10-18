@@ -9,8 +9,9 @@ import CablePicker, { CableCard } from "./CablePicker";
 import Roll from "./Roll";
 
 const QUESTIONS = ["Who is hurt?", "Find a safe detour.", "Check for bottlenecks.", "Move the traffic."];
+/** "gemini-3.8-flash" -> "Gemini 3.8 Flash" */
 const prettyModel = (m?: string) =>
-  (m ?? "Gemini").replace(/^gemini-/, "Gemini ").replace(/-argon$/, " Argon").replace(/-/g, " ");
+  (m ?? "gemini").split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 const duration = (ms: number) => (ms >= 2000 ? `${(ms / 1000).toFixed(1)} s` : `${Math.round(ms)} ms`);
 const money = (v: number, dp = 2) =>
   `$${v.toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp })}`;

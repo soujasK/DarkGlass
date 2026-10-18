@@ -19,7 +19,7 @@ avoids the damaged trench, checks it for bottlenecks, and moves the traffic. The
 |---|---|
 | ![Start](docs/screenshots/1-start.png) | **Incident.** Pick any of the 603 cables from the searchable list and cut it. |
 | ![Cut](docs/screenshots/2-cable-cut.png) | **Input.** The cable goes dark, a counter shows the money burning, and FalkorDB recalls past failures of this cable from its incident memory. |
-| ![Restored](docs/screenshots/3-restored.png) | **Output.** The agent (Gemini 4 Argon choosing the queries itself over MCP, or a deterministic playbook) restores training. The graph view shows the 11-hop path FalkorDB walked, the GPUs, servers, racks and halls behind the cut, and the tunnel's `CARRIED_BY` edge moving to the new cable. |
+| ![Restored](docs/screenshots/3-restored.png) | **Output.** The agent (Gemini 3.8 Flash choosing the queries itself over MCP, or a deterministic playbook) restores training. The graph view shows the 11-hop path FalkorDB walked, the GPUs, servers, racks and halls behind the cut, and the tunnel's `CARRIED_BY` edge moving to the new cable. |
 | ![Planet scan](docs/screenshots/4-planet-scan-running.png) | **Planet scan.** FalkorDB cuts every one of the 603 cables, one at a time, in four parallel sandbox copies of the graph. The globe becomes a risk heat map. |
 | ![Scan result](docs/screenshots/5-planet-scan.png) | The worst cables for the planet (landing stations stranded from the subsea network), for transatlantic capacity, and for our GPUs (GPUs whose gradient sync would freeze). |
 | ![Ask](docs/screenshots/6-ask-the-graph.png) | **Ask the graph.** Gemini writes the Cypher, FalkorDB answers in milliseconds, and the answer lights up on the globe. |
@@ -47,7 +47,7 @@ when FalkorDB actually runs it, with real call counts taken from query telemetry
 | Live mutations | Cuts, atomic all-or-nothing bandwidth reservation, tunnel rebinding, scan results written back |
 | Edge indexes | Index-backed lookups on cable, risk group, status and capacity |
 | Graph as memory | Each resolved incident is stored as `(:Incident)-[:SEVERED]->(:CableSystem)` and `-[:REROUTED_VIA]->`. The agent recalls it the next time that cable fails |
-| Text to Cypher | Ask the graph: Gemini 4 Argon writes Cypher, which runs under `GRAPH.RO_QUERY`, so a generated query can never write |
+| Text to Cypher | Ask the graph: Gemini 3.8 Flash writes Cypher, which runs under `GRAPH.RO_QUERY`, so a generated query can never write |
 
 ## Graph data model
 
@@ -157,9 +157,11 @@ left half-finished. FalkorDB data lives on a Docker volume.
 Ports: frontend 3000, API 8010, FalkorDB 6390, FalkorDB browser 3001. They are deliberately not
 8000 or 6379, to avoid clashing with local services.
 
-**Gemini 4 Argon (optional).** It runs on Google Cloud Vertex AI with your gcloud login; no API key
+**Gemini 3.8 Flash (optional).** It runs on Google Cloud Vertex AI with your gcloud login; no API key
 is stored. Run `gcloud auth application-default login`, then set `DARKGLASS_VERTEX_PROJECT_ID` (see
-`backend/.env.example`). Gemini is the default agent. Without it, choose **Playbook** under Agent;
+`backend/.env.example`). One setting, `DARKGLASS_GEMINI_MODEL`, picks the model for both the agent and
+Ask the graph. We moved from Gemini 4 Argon because Vertex took over 50 s per call for it on
+2026-10-18; Flash answered the same tool call in 3 to 12 s. Gemini is the default agent. Without it, choose **Playbook** under Agent;
 everything else works except Ask the graph.
 
 **Tests** (FalkorDB must be running):
@@ -204,7 +206,7 @@ as a **FastMCP server** (`python -m mcp_server.server`), so any MCP client can c
 | `execute_spectrum_reallocation` | Atomic bandwidth reservation, demoting backup traffic, rebinding the tunnel, and a simulated ROADM configuration |
 
 There are two ways to run the agent:
-- **Gemini 4 Argon (the default):** the agent starts the FastMCP server, discovers the tools with MCP
+- **Gemini 3.8 Flash (the default):** the agent starts the FastMCP server, discovers the tools with MCP
   `list_tools`, and the model chooses which tools to call and with what arguments, then writes an
   operator summary.
 - **Playbook:** a deterministic loop over the same four tools, with no model. Pick it under Agent if
@@ -262,6 +264,6 @@ frontend/src/            Next.js + react-three-fiber globe, mode screens, Falkor
 ## AI assistance
 
 This project was built with help from AI coding assistants (Anthropic's Claude, via Claude Code),
-which wrote much of the code and documentation under the author's direction. At runtime, Gemini 4
-Argon on Vertex AI is optional: it powers the LLM agent mode and Ask the graph. Everything else is
+which wrote much of the code and documentation under the author's direction. At runtime, Gemini 3.8
+Flash on Vertex AI is optional: it powers the LLM agent mode and Ask the graph. Everything else is
 deterministic code and FalkorDB queries.
