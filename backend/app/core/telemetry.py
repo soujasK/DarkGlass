@@ -41,7 +41,9 @@ def classify(cypher: str) -> str:
     for kind, rx in _RULES:
         if rx.search(cypher):
             return kind
-    return "traversal"
+    # No relationship hop (e.g. the UI's health counts): a plain lookup. It counts toward the
+    # session total but is not shown as a traversal.
+    return "lookup"
 
 
 def _label(cypher: str) -> str:

@@ -52,6 +52,8 @@ def test_telemetry_classifies_every_capability():
     assert classify("CREATE INDEX FOR (n:X) ON (n.id)") == "index"
     assert classify("MATCH (a)-[r:X]->(b) SET r.x = 1") == "mutation"
     assert classify("MATCH (a)-[r:X]->(b) RETURN a") == "traversal"
+    # a count with no relationship hop is not a traversal (it used to inflate the engine bar)
+    assert classify("MATCH (n:LandingStation) RETURN count(n) AS n") == "lookup"
     assert len(CAPABILITIES) == 9
 
 
