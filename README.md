@@ -122,7 +122,7 @@ calls, 300 max-flow runs, 1,800 mutations and 3,000 index lookups.
 
 ### Ask the graph: eval
 
-**23 of 23 questions answered correctly, on each of 3 runs (69/69), by Gemini 4 Argon.** Run it with
+**66 of 69 with Gemini 3.8 Flash (22 of 23 on each of 3 runs), median answer 2.3 s.** Run it with
 `python -m app.services.ask_eval` (results in `data/benchmarks/ask_eval.json`).
 
 The 23 questions in `backend/app/services/ask_eval.py` are hand-written and cover lookups (4),
@@ -135,10 +135,23 @@ from the live graph, not typed in. An answer passes only if it matches:
   depend on Dunant" fails if it simply lists every job;
 - **top**: the first row is the expected item (either one, when two are tied).
 
-The model is not deterministic, so every question runs 3 times. One earlier run scored 21 of 23. One
-miss was a dropped connection to Vertex (now retried once and counted separately). The other was a
-real miss: asked "how many racks are in the Ashburn campus data halls?", the model returned a count
-per hall instead of the total. That question is kept as written.
+The model is not deterministic, so every question runs 3 times. The one question Flash misses, every
+time, is a real mistake we left in rather than hint around: "What is the total design capacity of all
+cables that land in Ireland?" A cable can land at several Irish stations, and Flash either counts it
+twice (`sum(c.design_capacity_tbps)`, 1,026 Tbps) or removes duplicate capacity values instead of
+duplicate cables (`sum(DISTINCT c.design_capacity_tbps)`, 498 Tbps). The answer is 1,022.88 Tbps.
+
+How we got here, all on 2026-10-18:
+
+| Model | Prompt | Score |
+|---|---|---|
+| Gemini 4 Argon | original | 69/69 (one earlier run: 21/23, a dropped connection and a per-hall count) |
+| Gemini 3.8 Flash | original | 59/69: Flash wrote case-insensitive matches with `=~`, which FalkorDB does not support |
+| Gemini 3.8 Flash | + "FalkorDB has no `=~`", + "ready_for_service is an integer year" | **66/69** |
+
+We switched to Flash because Vertex stopped answering Argon in time (over 50 s per call). The two
+prompt additions state facts about FalkorDB and the data, so real questions benefit too; neither
+mentions an eval question.
 
 ## Run it
 

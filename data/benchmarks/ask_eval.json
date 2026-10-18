@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-10-17T17:43:03Z",
-  "model": "gemini-4-argon",
+  "generated_at": "2026-10-18T05:38:17Z",
+  "model": "gemini-3.8-flash",
   "questions": 23,
   "runs": 3,
   "scores": [
-    23,
-    23,
-    23
+    22,
+    22,
+    22
   ],
-  "passed": 69,
+  "passed": 66,
   "total": 69,
-  "accuracy": 1.0,
+  "accuracy": 0.9565,
   "transport_errors": 0,
   "by_kind": {
     "lookup": {
@@ -18,7 +18,7 @@
       "total": 12
     },
     "aggregate": {
-      "passed": 18,
+      "passed": 15,
       "total": 18
     },
     "multi-hop": {
@@ -92,7 +92,7 @@
     {
       "question": "What is the total design capacity in Tbps of all cables that land in Ireland?",
       "kind": "aggregate",
-      "passed_runs": 3,
+      "passed_runs": 0,
       "runs": 3
     },
     {
@@ -174,7 +174,7 @@
       "runs": 3
     }
   ],
-  "duration_s": 377.5,
+  "duration_s": 302.2,
   "results": [
     {
       "question": "How many subsea cable systems are in the graph?",
@@ -186,16 +186,16 @@
           "n": 603
         }
       ],
-      "cypher": "MATCH (c:CableSystem)\nRETURN count(c) AS cable_system_count\nLIMIT 1",
+      "cypher": "MATCH (c:CableSystem)\nRETURN count(c) AS total_cable_systems\nLIMIT 1",
       "answer": [
         {
-          "cable_system_count": 603
+          "total_cable_systems": 603
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 3624.4,
-      "engine_ms": 0.64
+      "llm_ms": 1339.9,
+      "engine_ms": 0.676
     },
     {
       "question": "Which countries does the Dunant cable land in?",
@@ -210,29 +210,21 @@
           "country": "France"
         }
       ],
-      "cypher": "MATCH (s:LandingStation)-[:LANDS]->(c:CableSystem)\nWHERE toLower(c.name) CONTAINS 'dunant'\nRETURN c.name AS cable_name, s.country_name AS country, s.country AS country_code, collect(s.name) AS stations\nORDER BY country\nLIMIT 25",
+      "cypher": "MATCH (s:LandingStation)-[:LANDS]->(c:CableSystem)\nWHERE toLower(c.name) CONTAINS 'dunant'\nRETURN DISTINCT s.country_name AS country, s.country AS country_code\nORDER BY country\nLIMIT 25",
       "answer": [
         {
-          "cable_name": "Dunant",
           "country": "France",
-          "country_code": "FR",
-          "stations": [
-            "Saint-Hilaire-de-Riez, France"
-          ]
+          "country_code": "FR"
         },
         {
-          "cable_name": "Dunant",
           "country": "United States",
-          "country_code": "US",
-          "stations": [
-            "Virginia Beach, VA, United States"
-          ]
+          "country_code": "US"
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 11724.5,
-      "engine_ms": 1.056
+      "llm_ms": 2384.5,
+      "engine_ms": 1.904
     },
     {
       "question": "In what year did MAREA enter service?",
@@ -244,19 +236,17 @@
           "year": 2018
         }
       ],
-      "cypher": "MATCH (c:CableSystem)\nWHERE toLower(c.name) CONTAINS 'marea'\nRETURN c.name AS cable_name, c.ready_for_service AS ready_for_service_year, c.length_km AS length_km, c.design_capacity_tbps AS design_capacity_tbps\nLIMIT 25",
+      "cypher": "MATCH (c:CableSystem)\nWHERE toLower(c.name) CONTAINS 'marea'\nRETURN c.name AS cable_name, c.ready_for_service AS rfs_year\nLIMIT 25",
       "answer": [
         {
           "cable_name": "MAREA",
-          "ready_for_service_year": 2018,
-          "length_km": 6605.0,
-          "design_capacity_tbps": 200.0
+          "rfs_year": 2018
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 3200.4,
-      "engine_ms": 1.024
+      "llm_ms": 13970.4,
+      "engine_ms": 1.56
     },
     {
       "question": "Who owns the Amitie cable?",
@@ -268,19 +258,17 @@
           "owners": "EXA Infrastructure, Meta, Microsoft, Orange, Vodafone"
         }
       ],
-      "cypher": "MATCH (c:CableSystem)\nWHERE toLower(c.name) CONTAINS 'amitie' OR toLower(c.id) CONTAINS 'amitie'\nRETURN c.name AS cable_name, c.owners AS owners, c.ready_for_service AS rfs_year, c.design_capacity_tbps AS capacity_tbps\nLIMIT 10",
+      "cypher": "MATCH (c:CableSystem)\nWHERE toLower(c.name) CONTAINS 'amitie'\nRETURN c.name AS cable_name, c.owners AS owners\nLIMIT 25",
       "answer": [
         {
           "cable_name": "Amitie",
-          "owners": "EXA Infrastructure, Meta, Microsoft, Orange, Vodafone",
-          "rfs_year": 2023,
-          "capacity_tbps": 250.0
+          "owners": "EXA Infrastructure, Meta, Microsoft, Orange, Vodafone"
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 4129.2,
-      "engine_ms": 1.291
+      "llm_ms": 1378.6,
+      "engine_ms": 1.586
     },
     {
       "question": "How many GPUs are in the Dublin campus?",
@@ -292,17 +280,16 @@
           "n": 37888
         }
       ],
-      "cypher": "MATCH (g:GPU {campus: 'DUB'})\nRETURN g.campus AS campus, count(g) AS gpu_count\nLIMIT 1",
+      "cypher": "MATCH (g:GPU {campus: 'DUB'})\nRETURN count(g) AS dublin_gpu_count\nLIMIT 25",
       "answer": [
         {
-          "campus": "DUB",
-          "gpu_count": 37888
+          "dublin_gpu_count": 37888
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 24921.1,
-      "engine_ms": 21.718
+      "llm_ms": 4199.0,
+      "engine_ms": 22.529
     },
     {
       "question": "Which country has the most landing stations?",
@@ -314,63 +301,17 @@
           "country": "Canada"
         }
       ],
-      "cypher": "MATCH (s:LandingStation)\nRETURN s.country_name AS country_name, s.country AS country_code, count(s) AS station_count\nORDER BY station_count DESC\nLIMIT 25",
+      "cypher": "MATCH (s:LandingStation)\nWHERE s.country_name IS NOT NULL\nRETURN s.country_name AS country, count(s) AS landing_station_count\nORDER BY landing_station_count DESC\nLIMIT 1",
       "answer": [
         {
-          "country_name": "Canada",
-          "country_code": "CA",
-          "station_count": 147
-        },
-        {
-          "country_name": "United States",
-          "country_code": "US",
-          "station_count": 137
-        },
-        {
-          "country_name": "Indonesia",
-          "country_code": "ID",
-          "station_count": 133
-        },
-        {
-          "country_name": "United Kingdom",
-          "country_code": "GB",
-          "station_count": 122
-        },
-        {
-          "country_name": "Philippines",
-          "country_code": "PH",
-          "station_count": 69
-        },
-        {
-          "country_name": "Japan",
-          "country_code": "JP",
-          "station_count": 66
-        },
-        {
-          "country_name": "Brazil",
-          "country_code": "BR",
-          "station_count": 65
-        },
-        {
-          "country_name": "Italy",
-          "country_code": "IT",
-          "station_count": 54
-        },
-        {
-          "country_name": "Spain",
-          "country_code": "ES",
-          "station_count": 45
-        },
-        {
-          "country_name": "Norway",
-          "country_code": "NO",
-          "station_count": 40
+          "country": "Canada",
+          "landing_station_count": 147
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 3207.1,
-      "engine_ms": 1.862
+      "llm_ms": 1563.7,
+      "engine_ms": 2.166
     },
     {
       "question": "What is the longest subsea cable?",
@@ -383,73 +324,18 @@
           "name": "2Africa"
         }
       ],
-      "cypher": "MATCH (c:CableSystem)\nWHERE c.length_km IS NOT NULL\nRETURN c.name AS cable_name, c.length_km AS length_km, c.design_capacity_tbps AS capacity_tbps, c.ready_for_service AS rfs_year\nORDER BY c.length_km DESC\nLIMIT 10",
+      "cypher": "MATCH (c:CableSystem)\nWHERE c.length_km IS NOT NULL\nRETURN c.name AS cable_name, c.length_km AS length_km, c.ready_for_service AS rfs_year\nORDER BY c.length_km DESC\nLIMIT 1",
       "answer": [
         {
           "cable_name": "2Africa",
           "length_km": 45000.0,
-          "capacity_tbps": 250.0,
           "rfs_year": 2024
-        },
-        {
-          "cable_name": "EAC-C2C",
-          "length_km": 36500.0,
-          "capacity_tbps": 3.2,
-          "rfs_year": 2002
-        },
-        {
-          "cable_name": "Southern Cross Cable Network (SCCN)",
-          "length_km": 30500.0,
-          "capacity_tbps": 3.2,
-          "rfs_year": 2000
-        },
-        {
-          "cable_name": "Asia Africa Europe-1 (AAE-1)",
-          "length_km": 25000.0,
-          "capacity_tbps": 60.0,
-          "rfs_year": 2017
-        },
-        {
-          "cable_name": "South America-1 (SAm-1)",
-          "length_km": 25000.0,
-          "capacity_tbps": 3.2,
-          "rfs_year": 2001
-        },
-        {
-          "cable_name": "PEACE Cable",
-          "length_km": 25000.0,
-          "capacity_tbps": 250.0,
-          "rfs_year": 2022
-        },
-        {
-          "cable_name": "GlobeNet",
-          "length_km": 23500.0,
-          "capacity_tbps": 3.2,
-          "rfs_year": 2000
-        },
-        {
-          "cable_name": "Tata TGN-Pacific",
-          "length_km": 22300.0,
-          "capacity_tbps": 3.2,
-          "rfs_year": 2002
-        },
-        {
-          "cable_name": "Pacific Crossing-1 (PC-1)",
-          "length_km": 21000.0,
-          "capacity_tbps": 0.64,
-          "rfs_year": 1999
-        },
-        {
-          "cable_name": "SeaMeWe-4",
-          "length_km": 20000.0,
-          "capacity_tbps": 8.0,
-          "rfs_year": 2005
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 14034.7,
-      "engine_ms": 1.048
+      "llm_ms": 1596.3,
+      "engine_ms": 0.899
     },
     {
       "question": "How many cables entered service in 2020?",
@@ -461,41 +347,16 @@
           "n": 23
         }
       ],
-      "cypher": "MATCH (c:CableSystem) WHERE toString(c.ready_for_service) STARTS WITH '2020' RETURN count(c) AS cables_entered_service_2020, collect(c.name)[0..25] AS cable_names LIMIT 1",
+      "cypher": "MATCH (c:CableSystem)\nWHERE c.ready_for_service = 2020\nRETURN count(c) AS cables_entered_service_2020\nLIMIT 25",
       "answer": [
         {
-          "cables_entered_service_2020": 23,
-          "cable_names": [
-            "Chennai-Andaman & Nicobar Islands Cable (CANI)",
-            "Cook Strait",
-            "Coral Sea Cable System (CS\u00b2)",
-            "Curie",
-            "Cyclades B",
-            "DOS CONTINENTES l & ll",
-            "Eviny Digital",
-            "Fibra Optica al Pac\u00edfico",
-            "Fibra Optica Austral",
-            "Guadeloupe Cable des Iles du Sud (GCIS)",
-            "Havfrue/AEC-2",
-            "Japan-Guam-Australia North (JGA-N)",
-            "Japan-Guam-Australia South (JGA-S)",
-            "JUPITER",
-            "KetchCan1 Submarine Fiber Cable System",
-            "Lake Albert 2",
-            "Malta-Gozo Cable",
-            "Manatua",
-            "Okinawa Cellular Cable",
-            "Oran-Valencia (ORVAL)",
-            "Prat",
-            "Skagenfiber West",
-            "South Atlantic Inter Link (SAIL)"
-          ]
+          "cables_entered_service_2020": 23
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 3558.6,
-      "engine_ms": 0.955
+      "llm_ms": 1483.1,
+      "engine_ms": 0.847
     },
     {
       "question": "Which landing station has the most cables landing at it?",
@@ -512,95 +373,40 @@
           "name": "Batam, Indonesia"
         }
       ],
-      "cypher": "MATCH (s:LandingStation)-[:LANDS]->(c:CableSystem)\nRETURN s.name AS station_name, s.code AS station_code, s.country_name AS country, count(DISTINCT c) AS cable_count\nORDER BY cable_count DESC\nLIMIT 10",
+      "cypher": "MATCH (s:LandingStation)-[:LANDS]->(c:CableSystem)\nRETURN s.name AS station_name, s.code AS station_code, s.country_name AS country, count(c) AS cable_count\nORDER BY cable_count DESC\nLIMIT 1",
       "answer": [
-        {
-          "station_name": "Batam, Indonesia",
-          "station_code": "BAT",
-          "country": "Indonesia",
-          "cable_count": 14
-        },
         {
           "station_name": "Tuas, Singapore",
           "station_code": "TUA",
           "country": "Singapore",
           "cable_count": 14
-        },
-        {
-          "station_name": "Jeddah, Saudi Arabia",
-          "station_code": "JED",
-          "country": "Saudi Arabia",
-          "cable_count": 13
-        },
-        {
-          "station_name": "Mumbai, India",
-          "station_code": "MUM",
-          "country": "India",
-          "cable_count": 12
-        },
-        {
-          "station_name": "Fujairah, United Arab Emirates",
-          "station_code": "FUJ",
-          "country": "United Arab Emirates",
-          "cable_count": 12
-        },
-        {
-          "station_name": "Marseille, France",
-          "station_code": "MRS",
-          "country": "France",
-          "cable_count": 12
-        },
-        {
-          "station_name": "Shima, Japan",
-          "station_code": "SHI",
-          "country": "Japan",
-          "cable_count": 10
-        },
-        {
-          "station_name": "Changi North, Singapore",
-          "station_code": "CNO",
-          "country": "Singapore",
-          "cable_count": 10
-        },
-        {
-          "station_name": "Fortaleza, Brazil",
-          "station_code": "FOR",
-          "country": "Brazil",
-          "cable_count": 9
-        },
-        {
-          "station_name": "Helsinki, Finland",
-          "station_code": "HEL",
-          "country": "Finland",
-          "cable_count": 9
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 11218.3,
-      "engine_ms": 9.04
+      "llm_ms": 1562.7,
+      "engine_ms": 10.033
     },
     {
       "question": "What is the total design capacity in Tbps of all cables that land in Ireland?",
       "kind": "aggregate",
       "mode": "number",
-      "passed": true,
+      "passed": false,
       "expected": [
         {
           "tbps": 1022.88
         }
       ],
-      "cypher": "MATCH (s:LandingStation {country_name: 'Ireland'})-[:LANDS]->(c:CableSystem)\nWITH DISTINCT c\nRETURN count(c) AS cable_count, sum(c.design_capacity_tbps) AS total_design_capacity_tbps\nLIMIT 25",
+      "cypher": "MATCH (s:LandingStation {country_name: 'Ireland'})-[:LANDS]->(c:CableSystem)\nRETURN sum(DISTINCT c.design_capacity_tbps) AS total_design_capacity_tbps\nLIMIT 1",
       "answer": [
         {
-          "cable_count": 14,
-          "total_design_capacity_tbps": 1022.88
+          "total_design_capacity_tbps": 497.84
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 3934.4,
-      "engine_ms": 1.399
+      "llm_ms": 2192.8,
+      "engine_ms": 1.611
     },
     {
       "question": "Which cables carry the primary gradient sync tunnel tun_iad_dub_pri?",
@@ -625,41 +431,37 @@
           "name": "Pan European Crossing (UK-Ireland)"
         }
       ],
-      "cypher": "MATCH (t:LogicalTunnel {id: 'tun_iad_dub_pri'})-[:CARRIED_BY]->(c:CableSystem)\nRETURN t.id AS tunnel_id, c.id AS cable_id, c.name AS cable_name, c.design_capacity_tbps AS capacity_tbps, c.length_km AS length_km\nORDER BY c.name\nLIMIT 25",
+      "cypher": "MATCH (t:LogicalTunnel {id: 'tun_iad_dub_pri'})-[:CARRIED_BY]->(c:CableSystem)\nRETURN c.id AS cable_id, c.name AS cable_name, c.design_capacity_tbps AS capacity_tbps, c.ready_for_service AS rfs_year\nLIMIT 25",
       "answer": [
         {
-          "tunnel_id": "tun_iad_dub_pri",
           "cable_id": "channel-islands-9-liberty-submarine-cable",
           "cable_name": "Channel Islands-9 Liberty Submarine Cable",
           "capacity_tbps": 8.0,
-          "length_km": -1.0
+          "rfs_year": 2008
         },
         {
-          "tunnel_id": "tun_iad_dub_pri",
           "cable_id": "dunant",
           "cable_name": "Dunant",
           "capacity_tbps": 250.0,
-          "length_km": 6400.0
+          "rfs_year": 2021
         },
         {
-          "tunnel_id": "tun_iad_dub_pri",
           "cable_id": "high-capacity-undersea-guernsey-optical-fibre-hugo",
           "cable_name": "High-capacity Undersea Guernsey Optical-fibre (HUGO)",
           "capacity_tbps": 8.0,
-          "length_km": 425.0
+          "rfs_year": 2007
         },
         {
-          "tunnel_id": "tun_iad_dub_pri",
           "cable_id": "pan-european-crossing-uk-ireland",
           "cable_name": "Pan European Crossing (UK-Ireland)",
           "capacity_tbps": 3.2,
-          "length_km": 495.0
+          "rfs_year": 2000
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 7920.8,
-      "engine_ms": 0.532
+      "llm_ms": 3626.1,
+      "engine_ms": 0.928
     },
     {
       "question": "Which training jobs depend on the Dunant cable?",
@@ -672,20 +474,20 @@
           "name": "Llama-4 400B MoE pretrain"
         }
       ],
-      "cypher": "MATCH (j:TrainingJob)-[:COORDINATES]->(r:NCCL_Ring)-[:USES_TUNNEL]->(t:LogicalTunnel)-[:CARRIED_BY]->(c:CableSystem)\nWHERE toLower(c.name) CONTAINS 'dunant' OR toLower(c.id) CONTAINS 'dunant'\nRETURN DISTINCT j.id AS job_id, j.name AS job_name, j.gpu_count AS gpus, j.priority AS priority, c.name AS cable_name\nORDER BY j.gpu_count DESC\nLIMIT 25",
+      "cypher": "MATCH (j:TrainingJob)-[:COORDINATES]->(r:NCCL_Ring)-[:USES_TUNNEL]->(t:LogicalTunnel)-[:CARRIED_BY]->(c:CableSystem)\nWHERE toLower(c.name) CONTAINS 'dunant'\nRETURN DISTINCT j.id AS job_id, j.name AS job_name, j.gpu_count AS gpu_count, j.priority AS priority, c.name AS cable_name\nORDER BY j.priority DESC, j.name ASC\nLIMIT 25",
       "answer": [
         {
           "job_id": "job_llama4_400b",
           "job_name": "Llama-4 400B MoE pretrain",
-          "gpus": 65536,
+          "gpu_count": 65536,
           "priority": 1,
           "cable_name": "Dunant"
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 3524.0,
-      "engine_ms": 2.211
+      "llm_ms": 1663.6,
+      "engine_ms": 1.779
     },
     {
       "question": "Which traffic classes ride the Pan European Crossing (UK-Ireland) cable?",
@@ -703,41 +505,25 @@
           "traffic_class": "GRADIENT_SYNC"
         }
       ],
-      "cypher": "MATCH (t:LogicalTunnel)-[:CARRIED_BY]->(c:CableSystem)\nWHERE c.name CONTAINS 'Pan European Crossing (UK-Ireland)'\nRETURN DISTINCT c.name AS cable_name, t.traffic_class AS traffic_class, t.id AS tunnel_id, t.required_bandwidth_gbps AS bandwidth_gbps, t.state AS state\nLIMIT 25",
+      "cypher": "MATCH (t:LogicalTunnel)-[:CARRIED_BY]->(c:CableSystem)\nWHERE toLower(c.name) CONTAINS 'pan european crossing' AND toLower(c.name) CONTAINS 'uk-ireland'\nRETURN DISTINCT t.traffic_class AS traffic_class, c.name AS cable_name\nLIMIT 25",
       "answer": [
         {
-          "cable_name": "Pan European Crossing (UK-Ireland)",
           "traffic_class": "BULK_BACKUP",
-          "tunnel_id": "tun_iad_dub_bulk",
-          "bandwidth_gbps": 800.0,
-          "state": "ACTIVE"
+          "cable_name": "Pan European Crossing (UK-Ireland)"
         },
         {
-          "cable_name": "Pan European Crossing (UK-Ireland)",
           "traffic_class": "CHECKPOINT_BURST",
-          "tunnel_id": "tun_iad_dub_ckpt",
-          "bandwidth_gbps": 1600.0,
-          "state": "ACTIVE"
+          "cable_name": "Pan European Crossing (UK-Ireland)"
         },
         {
-          "cable_name": "Pan European Crossing (UK-Ireland)",
           "traffic_class": "GRADIENT_SYNC",
-          "tunnel_id": "tun_iad_dub_sec",
-          "bandwidth_gbps": 3200.0,
-          "state": "ACTIVE"
-        },
-        {
-          "cable_name": "Pan European Crossing (UK-Ireland)",
-          "traffic_class": "GRADIENT_SYNC",
-          "tunnel_id": "tun_iad_dub_pri",
-          "bandwidth_gbps": 3200.0,
-          "state": "ACTIVE"
+          "cable_name": "Pan European Crossing (UK-Ireland)"
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 3779.9,
-      "engine_ms": 1.283
+      "llm_ms": 5271.5,
+      "engine_ms": 1.086
     },
     {
       "question": "Which other cables share a risk group (SRLG) with Dunant?",
@@ -754,25 +540,21 @@
           "name": "MAREA"
         }
       ],
-      "cypher": "MATCH (c1:CableSystem)\nWHERE toLower(c1.name) CONTAINS 'dunant'\nMATCH (:LandingStation)-[s1:OPTICAL_SPAN|SEVERED_SPAN {cable_id: c1.id}]->(:LandingStation)\nWHERE s1.srlg_id IS NOT NULL\nMATCH (:LandingStation)-[s2:OPTICAL_SPAN|SEVERED_SPAN {srlg_id: s1.srlg_id}]->(:LandingStation)\nWHERE s2.cable_id <> c1.id AND s2.cable_id <> 'backhaul'\nMATCH (c2:CableSystem {id: s2.cable_id})\nRETURN DISTINCT c2.name AS cable_name, c2.id AS cable_id, s1.srlg_id AS shared_srlg_id, c2.scan_risk AS scan_risk\nORDER BY scan_risk DESC\nLIMIT 25",
+      "cypher": "MATCH (target:CableSystem)\nWHERE toLower(target.name) CONTAINS 'dunant'\nMATCH ()-[s1:OPTICAL_SPAN]->()\nWHERE s1.cable_id = target.id AND s1.srlg_id IS NOT NULL\nMATCH ()-[s2:OPTICAL_SPAN]->()\nWHERE s2.srlg_id = s1.srlg_id AND s2.cable_id <> target.id\nMATCH (other:CableSystem {id: s2.cable_id})\nRETURN DISTINCT other.name AS shared_cable, s1.srlg_id AS srlg_id\nLIMIT 25",
       "answer": [
         {
-          "cable_name": "MAREA",
-          "cable_id": "marea",
-          "shared_srlg_id": "SRLG-USE-VAB-SHELF",
-          "scan_risk": 90.86
+          "shared_cable": "BRUSA",
+          "srlg_id": "SRLG-USE-VAB-SHELF"
         },
         {
-          "cable_name": "BRUSA",
-          "cable_id": "brusa",
-          "shared_srlg_id": "SRLG-USE-VAB-SHELF",
-          "scan_risk": 35.19
+          "shared_cable": "MAREA",
+          "srlg_id": "SRLG-USE-VAB-SHELF"
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 4539.2,
-      "engine_ms": 1741.356
+      "llm_ms": 3909.7,
+      "engine_ms": 4818.646
     },
     {
       "question": "How many GPUs are members of the NCCL rings coordinated by the Llama-4 400B job?",
@@ -784,19 +566,17 @@
           "n": 65536
         }
       ],
-      "cypher": "MATCH (j:TrainingJob)-[:COORDINATES]->(r:NCCL_Ring)<-[:MEMBER_OF]-(g:GPU)\nWHERE j.name CONTAINS 'Llama-4' OR j.name CONTAINS '400B'\nRETURN j.id AS job_id, j.name AS job_name, j.gpu_count AS declared_gpus, count(DISTINCT g) AS ring_member_gpus\nLIMIT 10",
+      "cypher": "MATCH (j:TrainingJob)-[:COORDINATES]->(r:NCCL_Ring)<-[:MEMBER_OF]-(g:GPU)\nWHERE toLower(j.name) CONTAINS 'llama-4' AND toLower(j.name) CONTAINS '400b'\nRETURN j.name AS job_name, count(DISTINCT g) AS gpu_count\nLIMIT 25",
       "answer": [
         {
-          "job_id": "job_llama4_400b",
           "job_name": "Llama-4 400B MoE pretrain",
-          "declared_gpus": 65536,
-          "ring_member_gpus": 65536
+          "gpu_count": 65536
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 3344.3,
-      "engine_ms": 62.632
+      "llm_ms": 1731.1,
+      "engine_ms": 93.336
     },
     {
       "question": "Which data halls contain servers whose GPUs belong to ring ring_iad_dub_01?",
@@ -829,7 +609,7 @@
           "id": "DUB-HALL-4"
         }
       ],
-      "cypher": "MATCH (r:NCCL_Ring {id: 'ring_iad_dub_01'})<-[:MEMBER_OF]-(g:GPU)<-[:ATTACHED_TO]-(:NIC)<-[:HAS_NIC]-(s:Server)-[:IN_RACK]->(:Rack)-[:IN_ROW]->(:Row)-[:IN_HALL]->(dh:DataHall)\nRETURN dh.id AS data_hall_id, dh.campus AS campus, count(DISTINCT s) AS server_count, count(DISTINCT g) AS gpu_count\nORDER BY dh.campus, dh.id\nLIMIT 25",
+      "cypher": "MATCH (r:NCCL_Ring {id: 'ring_iad_dub_01'})<-[:MEMBER_OF]-(g:GPU)<-[:ATTACHED_TO]-(:NIC)<-[:HAS_NIC]-(s:Server)-[:IN_RACK]->(:Rack)-[:IN_ROW]->(:Row)-[:IN_HALL]->(dh:DataHall)\nRETURN DISTINCT dh.id AS data_hall_id, dh.campus AS campus, count(DISTINCT s) AS server_count, count(DISTINCT g) AS gpu_count\nORDER BY dh.id ASC\nLIMIT 25",
       "answer": [
         {
           "data_hall_id": "DUB-HALL-1",
@@ -882,8 +662,8 @@
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 3997.5,
-      "engine_ms": 101.173
+      "llm_ms": 2836.6,
+      "engine_ms": 171.191
     },
     {
       "question": "Which NCCL rings send their traffic over gradient sync tunnels?",
@@ -916,93 +696,69 @@
           "id": "ring_iad_dub_01"
         }
       ],
-      "cypher": "MATCH (j:TrainingJob)-[:COORDINATES]->(r:NCCL_Ring)-[:USES_TUNNEL]->(t:LogicalTunnel)\nWHERE toLower(t.traffic_class) CONTAINS 'gradient'\nRETURN r.id AS ring_id, r.ring_index AS ring_index, r.bucket_size_mb AS bucket_size_mb, r.timeout_threshold_ms AS timeout_ms, j.name AS training_job, t.id AS tunnel_id, t.traffic_class AS traffic_class, t.required_bandwidth_gbps AS bandwidth_gbps\nORDER BY r.ring_index ASC\nLIMIT 25",
+      "cypher": "MATCH (r:NCCL_Ring)-[:USES_TUNNEL]->(t:LogicalTunnel)\nWHERE toLower(t.traffic_class) CONTAINS 'gradient'\nRETURN r.id AS ring_id, r.ring_index AS ring_index, t.id AS tunnel_id, t.traffic_class AS traffic_class, t.state AS tunnel_state\nLIMIT 25",
       "answer": [
         {
-          "ring_id": "ring_iad_dub_01",
-          "ring_index": 1,
-          "bucket_size_mb": 128,
-          "timeout_ms": 60.0,
-          "training_job": "Llama-4 400B MoE pretrain",
-          "tunnel_id": "tun_iad_dub_pri",
-          "traffic_class": "GRADIENT_SYNC",
-          "bandwidth_gbps": 3200.0
-        },
-        {
-          "ring_id": "ring_iad_dub_02",
-          "ring_index": 2,
-          "bucket_size_mb": 128,
-          "timeout_ms": 60.0,
-          "training_job": "Llama-4 400B MoE pretrain",
-          "tunnel_id": "tun_iad_dub_pri",
-          "traffic_class": "GRADIENT_SYNC",
-          "bandwidth_gbps": 3200.0
-        },
-        {
-          "ring_id": "ring_iad_dub_03",
-          "ring_index": 3,
-          "bucket_size_mb": 128,
-          "timeout_ms": 60.0,
-          "training_job": "Llama-4 400B MoE pretrain",
-          "tunnel_id": "tun_iad_dub_pri",
-          "traffic_class": "GRADIENT_SYNC",
-          "bandwidth_gbps": 3200.0
-        },
-        {
-          "ring_id": "ring_iad_dub_04",
-          "ring_index": 4,
-          "bucket_size_mb": 128,
-          "timeout_ms": 60.0,
-          "training_job": "Llama-4 400B MoE pretrain",
-          "tunnel_id": "tun_iad_dub_pri",
-          "traffic_class": "GRADIENT_SYNC",
-          "bandwidth_gbps": 3200.0
-        },
-        {
-          "ring_id": "ring_iad_dub_05",
-          "ring_index": 5,
-          "bucket_size_mb": 128,
-          "timeout_ms": 60.0,
-          "training_job": "Llama-4 400B MoE pretrain",
+          "ring_id": "ring_iad_dub_08",
+          "ring_index": 8,
           "tunnel_id": "tun_iad_dub_sec",
           "traffic_class": "GRADIENT_SYNC",
-          "bandwidth_gbps": 3200.0
-        },
-        {
-          "ring_id": "ring_iad_dub_06",
-          "ring_index": 6,
-          "bucket_size_mb": 128,
-          "timeout_ms": 60.0,
-          "training_job": "Llama-4 400B MoE pretrain",
-          "tunnel_id": "tun_iad_dub_sec",
-          "traffic_class": "GRADIENT_SYNC",
-          "bandwidth_gbps": 3200.0
+          "tunnel_state": "ACTIVE"
         },
         {
           "ring_id": "ring_iad_dub_07",
           "ring_index": 7,
-          "bucket_size_mb": 128,
-          "timeout_ms": 60.0,
-          "training_job": "Llama-4 400B MoE pretrain",
           "tunnel_id": "tun_iad_dub_sec",
           "traffic_class": "GRADIENT_SYNC",
-          "bandwidth_gbps": 3200.0
+          "tunnel_state": "ACTIVE"
         },
         {
-          "ring_id": "ring_iad_dub_08",
-          "ring_index": 8,
-          "bucket_size_mb": 128,
-          "timeout_ms": 60.0,
-          "training_job": "Llama-4 400B MoE pretrain",
+          "ring_id": "ring_iad_dub_06",
+          "ring_index": 6,
           "tunnel_id": "tun_iad_dub_sec",
           "traffic_class": "GRADIENT_SYNC",
-          "bandwidth_gbps": 3200.0
+          "tunnel_state": "ACTIVE"
+        },
+        {
+          "ring_id": "ring_iad_dub_05",
+          "ring_index": 5,
+          "tunnel_id": "tun_iad_dub_sec",
+          "traffic_class": "GRADIENT_SYNC",
+          "tunnel_state": "ACTIVE"
+        },
+        {
+          "ring_id": "ring_iad_dub_04",
+          "ring_index": 4,
+          "tunnel_id": "tun_iad_dub_pri",
+          "traffic_class": "GRADIENT_SYNC",
+          "tunnel_state": "ACTIVE"
+        },
+        {
+          "ring_id": "ring_iad_dub_03",
+          "ring_index": 3,
+          "tunnel_id": "tun_iad_dub_pri",
+          "traffic_class": "GRADIENT_SYNC",
+          "tunnel_state": "ACTIVE"
+        },
+        {
+          "ring_id": "ring_iad_dub_02",
+          "ring_index": 2,
+          "tunnel_id": "tun_iad_dub_pri",
+          "traffic_class": "GRADIENT_SYNC",
+          "tunnel_state": "ACTIVE"
+        },
+        {
+          "ring_id": "ring_iad_dub_01",
+          "ring_index": 1,
+          "tunnel_id": "tun_iad_dub_pri",
+          "traffic_class": "GRADIENT_SYNC",
+          "tunnel_state": "ACTIVE"
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 9261.7,
-      "engine_ms": 0.829
+      "llm_ms": 1836.9,
+      "engine_ms": 1.532
     },
     {
       "question": "Which training jobs would be hit if every cable landing in France failed?",
@@ -1019,39 +775,34 @@
           "name": "RLHF policy 70B"
         }
       ],
-      "cypher": "MATCH (s:LandingStation {country_name: 'France'})-[:LANDS]->(c:CableSystem)<-[:CARRIED_BY]-(t:LogicalTunnel)<-[:USES_TUNNEL]-(r:NCCL_Ring)<-[:COORDINATES]-(j:TrainingJob)\nRETURN j.id AS job_id, j.name AS job_name, j.gpu_count AS gpu_count, j.priority AS priority, collect(DISTINCT c.name) AS affected_cables, collect(DISTINCT s.name) AS france_stations\nORDER BY j.gpu_count DESC\nLIMIT 25",
+      "cypher": "MATCH (s:LandingStation {country_name: 'France'})-[:LANDS]->(c:CableSystem)<-[:CARRIED_BY]-(t:LogicalTunnel)<-[:USES_TUNNEL]-(r:NCCL_Ring)<-[:COORDINATES]-(j:TrainingJob)\nRETURN DISTINCT j.name AS job_name, j.model_params AS model_params, j.gpu_count AS gpu_count, j.priority AS priority, c.name AS affected_cable\nORDER BY j.priority DESC, j.gpu_count DESC\nLIMIT 25",
       "answer": [
         {
-          "job_id": "job_llama4_400b",
-          "job_name": "Llama-4 400B MoE pretrain",
-          "gpu_count": 65536,
-          "priority": 1,
-          "affected_cables": [
-            "High-capacity Undersea Guernsey Optical-fibre (HUGO)",
-            "Dunant"
-          ],
-          "france_stations": [
-            "Lannion, France",
-            "Saint-Hilaire-de-Riez, France"
-          ]
-        },
-        {
-          "job_id": "job_rlhf_70b",
           "job_name": "RLHF policy 70B",
+          "model_params": "70B_DENSE",
           "gpu_count": 8192,
           "priority": 3,
-          "affected_cables": [
-            "Amitie"
-          ],
-          "france_stations": [
-            "Le Porge, France"
-          ]
+          "affected_cable": "Amitie"
+        },
+        {
+          "job_name": "Llama-4 400B MoE pretrain",
+          "model_params": "400B_MoE",
+          "gpu_count": 65536,
+          "priority": 1,
+          "affected_cable": "High-capacity Undersea Guernsey Optical-fibre (HUGO)"
+        },
+        {
+          "job_name": "Llama-4 400B MoE pretrain",
+          "model_params": "400B_MoE",
+          "gpu_count": 65536,
+          "priority": 1,
+          "affected_cable": "Dunant"
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 3962.8,
-      "engine_ms": 2.548
+      "llm_ms": 8154.9,
+      "engine_ms": 2.412
     },
     {
       "question": "How many racks are in the Ashburn campus data halls?",
@@ -1063,19 +814,16 @@
           "n": 1184
         }
       ],
-      "cypher": "MATCH (rk:Rack)-[:IN_ROW]->(:Row)-[:IN_HALL]->(dh:DataHall)-[:IN_CAMPUS]->(s:LandingStation {code: 'IAD'})\nRETURN s.name AS campus_name, s.code AS campus_code, count(DISTINCT dh) AS data_halls, count(DISTINCT rk) AS total_racks\nLIMIT 25",
+      "cypher": "MATCH (rack:Rack)-[:IN_ROW]->(:Row)-[:IN_HALL]->(:DataHall)-[:IN_CAMPUS]->(s:LandingStation {code: 'IAD'})\nRETURN count(DISTINCT rack) AS ashburn_rack_count\nLIMIT 25",
       "answer": [
         {
-          "campus_name": "US-East-Ashburn (AI campus gateway)",
-          "campus_code": "IAD",
-          "data_halls": 4,
-          "total_racks": 1184
+          "ashburn_rack_count": 1184
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 3285.7,
-      "engine_ms": 1.702
+      "llm_ms": 2255.2,
+      "engine_ms": 2.281
     },
     {
       "question": "Which cable has the highest planet-scan risk?",
@@ -1088,93 +836,20 @@
           "name": "MAREA"
         }
       ],
-      "cypher": "MATCH (c:CableSystem)\nWHERE c.scan_risk IS NOT NULL\nRETURN c.id AS cable_id, c.name AS cable_name, c.scan_risk AS scan_risk, c.scan_rank AS scan_rank, c.scan_gpus_at_risk AS gpus_at_risk, c.scan_capacity_loss_tbps AS capacity_loss_tbps\nORDER BY c.scan_risk DESC\nLIMIT 10",
+      "cypher": "MATCH (c:CableSystem)\nWHERE c.scan_risk IS NOT NULL\nRETURN c.name AS cable_name, c.scan_risk AS scan_risk, c.scan_rank AS scan_rank, c.scan_gpus_at_risk AS gpus_at_risk, c.scan_isolated_stations AS isolated_stations\nORDER BY c.scan_risk DESC\nLIMIT 1",
       "answer": [
         {
-          "cable_id": "marea",
           "cable_name": "MAREA",
           "scan_risk": 90.86,
           "scan_rank": 1,
           "gpus_at_risk": 65536,
-          "capacity_loss_tbps": 123.42
-        },
-        {
-          "cable_id": "dunant",
-          "cable_name": "Dunant",
-          "scan_risk": 74.95,
-          "scan_rank": 2,
-          "gpus_at_risk": 65536,
-          "capacity_loss_tbps": 59.82
-        },
-        {
-          "cable_id": "pan-european-crossing-uk-ireland",
-          "cable_name": "Pan European Crossing (UK-Ireland)",
-          "scan_risk": 69.41,
-          "scan_rank": 3,
-          "gpus_at_risk": 75776,
-          "capacity_loss_tbps": 0.0
-        },
-        {
-          "cable_id": "high-capacity-undersea-guernsey-optical-fibre-hugo",
-          "cable_name": "High-capacity Undersea Guernsey Optical-fibre (HUGO)",
-          "scan_risk": 60.0,
-          "scan_rank": 5,
-          "gpus_at_risk": 65536,
-          "capacity_loss_tbps": 0.0
-        },
-        {
-          "cable_id": "channel-islands-9-liberty-submarine-cable",
-          "cable_name": "Channel Islands-9 Liberty Submarine Cable",
-          "scan_risk": 60.0,
-          "scan_rank": 4,
-          "gpus_at_risk": 65536,
-          "capacity_loss_tbps": 0.0
-        },
-        {
-          "cable_id": "africa-coast-to-europe-ace",
-          "cable_name": "Africa Coast to Europe (ACE)",
-          "scan_risk": 50.45,
-          "scan_rank": 6,
-          "gpus_at_risk": 0,
-          "capacity_loss_tbps": 21.81
-        },
-        {
-          "cable_id": "kafos",
-          "cable_name": "KAFOS",
-          "scan_risk": 49.0,
-          "scan_rank": 7,
-          "gpus_at_risk": 0,
-          "capacity_loss_tbps": 0.0
-        },
-        {
-          "cable_id": "hantru1-cable-system",
-          "cable_name": "HANTRU1 Cable System",
-          "scan_risk": 39.0,
-          "scan_rank": 8,
-          "gpus_at_risk": 0,
-          "capacity_loss_tbps": 0.0
-        },
-        {
-          "cable_id": "amitie",
-          "cable_name": "Amitie",
-          "scan_risk": 36.25,
-          "scan_rank": 9,
-          "gpus_at_risk": 8192,
-          "capacity_loss_tbps": 115.0
-        },
-        {
-          "cable_id": "brusa",
-          "cable_name": "BRUSA",
-          "scan_risk": 35.19,
-          "scan_rank": 10,
-          "gpus_at_risk": 0,
-          "capacity_loss_tbps": 140.75
+          "isolated_stations": 0
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 3102.4,
-      "engine_ms": 0.607
+      "llm_ms": 7231.0,
+      "engine_ms": 1.376
     },
     {
       "question": "How many times has the Dunant cable failed before, according to incident memory?",
@@ -1183,21 +858,20 @@
       "passed": true,
       "expected": [
         {
-          "n": 4
+          "n": 7
         }
       ],
-      "cypher": "MATCH (c:CableSystem) WHERE toLower(c.name) CONTAINS 'dunant'\nOPTIONAL MATCH (i:Incident)-[:SEVERED]->(c)\nRETURN c.name AS cable_name, count(i) AS failure_count, round(sum(i.loss_usd)) AS total_loss_usd\nLIMIT 25",
+      "cypher": "MATCH (i:Incident)-[:SEVERED]->(c:CableSystem)\nWHERE toLower(c.name) CONTAINS 'dunant'\nRETURN c.name AS cable_name, count(i) AS failure_count\nLIMIT 25",
       "answer": [
         {
           "cable_name": "Dunant",
-          "failure_count": 4,
-          "total_loss_usd": 43.0
+          "failure_count": 7
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 3312.2,
-      "engine_ms": 1.039
+      "llm_ms": 1496.6,
+      "engine_ms": 2.325
     },
     {
       "question": "Which cables have past incidents rerouted traffic onto?",
@@ -1210,19 +884,18 @@
           "name": "Havfrue/AEC-2"
         }
       ],
-      "cypher": "MATCH (i:Incident)-[:REROUTED_VIA]->(c:CableSystem)\nRETURN DISTINCT c.id AS cable_id, c.name AS cable_name, c.design_capacity_tbps AS capacity_tbps, count(i) AS incident_count\nORDER BY incident_count DESC, cable_name ASC\nLIMIT 25",
+      "cypher": "MATCH (i:Incident)-[:REROUTED_VIA]->(c:CableSystem)\nRETURN DISTINCT c.id AS cable_id, c.name AS cable_name, count(i) AS incidents_rerouted_onto\nORDER BY incidents_rerouted_onto DESC\nLIMIT 25",
       "answer": [
         {
           "cable_id": "havfrueaec-2",
           "cable_name": "Havfrue/AEC-2",
-          "capacity_tbps": 160.0,
-          "incident_count": 5
+          "incidents_rerouted_onto": 9
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 3130.4,
-      "engine_ms": 1.017
+      "llm_ms": 5373.5,
+      "engine_ms": 0.666
     },
     {
       "question": "What is the lowest possible latency in ms between the IAD and DUB gateways over optical spans?",
@@ -1234,29 +907,27 @@
           "latency_ms": 30.3967
         }
       ],
-      "cypher": "MATCH (src:LandingStation {code: 'IAD'}), (dst:LandingStation {code: 'DUB'})\nCALL algo.SPpaths({\n  sourceNode: src,\n  targetNode: dst,\n  relTypes: ['OPTICAL_SPAN'],\n  weightProp: 'latency_ms',\n  pathCount: 1\n}) YIELD path, pathWeight\nRETURN src.code AS source_gateway,\n       dst.code AS target_gateway,\n       pathWeight AS lowest_latency_ms,\n       [n IN nodes(path) | n.name] AS route_stations\nLIMIT 1",
+      "cypher": "MATCH (src:LandingStation {code: 'IAD'}), (dst:LandingStation {code: 'DUB'})\nCALL algo.SPpaths({sourceNode: src, targetNode: dst, relTypes: ['OPTICAL_SPAN'], weightProp: 'latency_ms', pathCount: 1})\nYIELD path, pathWeight\nRETURN pathWeight AS lowest_latency_ms, [n IN nodes(path) | n.code] AS route_stations\nLIMIT 1",
       "answer": [
         {
-          "source_gateway": "IAD",
-          "target_gateway": "DUB",
           "lowest_latency_ms": 30.3967,
           "route_stations": [
-            "US-East-Ashburn (AI campus gateway)",
-            "Wall Township, NJ, United States",
-            "Lecanvey, Ireland",
-            "Galway, Ireland",
-            "Cork, Ireland",
-            "Ballygrangans, Ireland",
-            "Ballinesker, Ireland",
-            "Sandymount, Ireland",
-            "EU-West-Dublin (AI campus gateway)"
+            "IAD",
+            "WAL",
+            "LCV",
+            "GWY",
+            "ORK",
+            "BAY",
+            "BAK",
+            "SNM",
+            "DUB"
           ]
         }
       ],
       "error": null,
       "transport_error": false,
-      "llm_ms": 4247.4,
-      "engine_ms": 1.781
+      "llm_ms": 6143.5,
+      "engine_ms": 1.842
     }
   ]
 }
