@@ -376,7 +376,7 @@ export default function Chapter() {
       ? [`${live.speedup.vs_sqlite_is_lower_bound ? ">" : ""}${Math.round(live.speedup.vs_sqlite).toLocaleString()}x`, "faster than SQL, this cut"]
       : measuring
         ? ["—", "vs SQL, measuring now"]
-        : ["4", "graph queries"];
+        : [String(s.steps.length), s.steps.length === 1 ? "agent tool run" : "agent tools run"];
     const stats: [string, string][] = [
       s.stalls ? [(result.restored_gpus ?? s.gpus).toLocaleString(), "GPUs back"] : [`${result.spectrum_tbps} Tbps`, "rerouted"],
       s.stalls ? [money(saved, 0), "saved vs manual, est."] : [`${result.detour_latency_ms?.toFixed(1)} ms`, "new latency"],

@@ -175,10 +175,15 @@ export const useMeshStore = create<MeshState>((set, get) => ({
     const st = get();
     const extra: Partial<MeshState> = {};
     const persisted = s.incident?.agent;
+    const changed = (st.snapshot?.incident?.incident_id ?? null) !== (s.incident?.incident_id ?? null);
+    if (changed && !st.agentRunning) {
+      // A reset or a new cut from anywhere (another tab, the API): the previous run's result no longer applies.
+      Object.assign(extra, { steps: [], agentResult: null, thoughts: [], selectedTrace: null });
+    }
     if (!s.incident) {
       extra.detour = null;
       extra.detourIgnitedAt = null;
-    } else if (persisted && !st.agentResult && !st.agentRunning && !st.queue.length) {
+    } else if (persisted && (changed || !st.agentResult) && !st.agentRunning && !st.queue.length) {
       // Page loaded after the agent already ran: show its result and corridor without replaying.
       extra.agentResult = persisted;
       extra.steps = (persisted.steps ?? []).map((x, i) => ({ step: i + 1, tool: x.tool, result: x.result }));
