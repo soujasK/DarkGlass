@@ -31,19 +31,24 @@ export default function EngineBar() {
     return () => clearInterval(id);
   }, []);
   const since = receivedAt ? (performance.now() - receivedAt) / 1000 : 0;
-  const total = Math.max(0, (engine?.total_calls ?? 0) - (base?.total ?? 0));
+  const sessionTotal = engine?.total_calls ?? 0;
+  const runTotal = Math.max(0, sessionTotal - (base?.total ?? 0));
+  const scope = base?.scope ?? "this session";
+  const scopeLabel = scope.charAt(0).toUpperCase() + scope.slice(1);
 
   return (
     <footer className="absolute inset-x-0 bottom-0 z-30 px-16 pb-[clamp(14px,2.6vh,24px)]">
       <button
         type="button"
         onClick={() => set({ drawerOpen: true })}
-        title="FalkorDB queries DarkGlass has run in this scope, by kind of work (the screen's own refresh queries are not counted). Click to see the queries."
+        title="Left: every FalkorDB query DarkGlass has run since the backend started. Right: the current run (this incident, scan, proof or question), by kind of work. The screen's own refresh queries are not counted. Click to see the queries."
         className="flex w-full flex-wrap items-baseline gap-x-5 gap-y-1 border-t border-white/[0.07] pt-3 text-left font-sans text-[12px] text-ink-3 transition-colors hover:text-ink-1"
       >
         <span className="font-medium text-ink-1">FalkorDB</span>
+        <span className="tabular-nums">{sessionTotal.toLocaleString()} queries in total</span>
+        <span className="h-3 w-px self-center bg-white/15" aria-hidden />
         <span className="tabular-nums">
-          {total.toLocaleString()} {total === 1 ? "query" : "queries"} {base?.scope ?? "this session"}
+          <span className="font-medium text-ink-1">{scopeLabel}:</span> {runTotal.toLocaleString()}
         </span>
         {(engine?.capabilities ?? []).map((c) => {
           const n = Math.max(0, c.calls - (base?.by[c.key] ?? 0));
