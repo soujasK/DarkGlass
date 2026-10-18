@@ -9,9 +9,10 @@ A 65,536-GPU training run spans Ashburn and Dublin. It syncs every 45 ms over un
 when a ship's anchor cuts one cable, every GPU freezes and the job burns about $5 a second.
 DarkGlass keeps the real subsea network (603 cables and 1,788 landing stations from TeleGeography)
 and the AI supercluster down to every GPU (jobs, sync rings, tunnels, border routers, Clos switches,
-servers, NICs, GPUs, racks and halls: about 170,000 nodes) in **one FalkorDB graph**. An agent works
+servers, NICs, GPUs, racks and halls: about 166,000 nodes) in **one FalkorDB graph**. An agent works
 out who is hurt with an 11-hop traversal from the seabed to the GPU, finds the fastest detour that
-avoids the damaged trench, checks it for bottlenecks, and moves the traffic. The fix takes about 0.3 s.
+avoids the damaged trench, checks it for bottlenecks, and moves the traffic. FalkorDB's part of the
+fix takes under half a second; with Gemini choosing the tools, the whole fix takes 35 to 50 s.
 
 ## What you see
 
@@ -23,7 +24,7 @@ avoids the damaged trench, checks it for bottlenecks, and moves the traffic. The
 | ![Planet scan](docs/screenshots/4-planet-scan-running.png) | **Planet scan.** FalkorDB cuts every one of the 603 cables, one at a time, in four parallel sandbox copies of the graph. The globe becomes a risk heat map. |
 | ![Scan result](docs/screenshots/5-planet-scan.png) | The worst cables for the planet (landing stations stranded from the subsea network), for transatlantic capacity, and for our GPUs (GPUs whose gradient sync would freeze). |
 | ![Ask](docs/screenshots/6-ask-the-graph.png) | **Ask the graph.** Gemini writes the Cypher, FalkorDB answers in milliseconds, and the answer lights up on the globe. |
-| ![Proof](docs/screenshots/7-proof.png) | **Proof.** The same question on the same data, run in FalkorDB, Python NetworkX and SQL. |
+| ![Proof](docs/screenshots/7-proof.png) | **Proof.** The cut you just made, answered live in FalkorDB, Python NetworkX and SQL on the same hash-checked snapshot. |
 
 The bar along the bottom of every screen is the **live FalkorDB engine**. Each capability lights up
 when FalkorDB actually runs it, with real call counts taken from query telemetry.
@@ -51,13 +52,13 @@ when FalkorDB actually runs it, with real call counts taken from query telemetry
 
 ## Graph data model
 
-One graph, `darkglass_core`, holds four layers. About 170,000 nodes and 270,000 relationships.
+One graph, `darkglass_core`, holds four layers: about 166,000 nodes and 261,000 relationships.
 
 ```
 Physical plant (TeleGeography)
-(:LandingStation {code, name, country, lat, lon})-[:OPTICAL_SPAN {cable_id, srlg_id, length_km, latency_ms,
-    capacity_tbps, available_capacity_tbps, route_weight, status}]->(:LandingStation)
-(:LandingStation)-[:LANDS]->(:CableSystem {id, name, rfs_year, length_km, owners})
+(:LandingStation {code, name, country_name, lat, lon})-[:OPTICAL_SPAN {cable_id, srlg_id, length_km,
+    latency_ms, max_capacity_tbps, available_capacity_tbps, route_weight, status}]->(:LandingStation)
+(:LandingStation)-[:LANDS]->(:CableSystem {id, name, design_capacity_tbps, ready_for_service, length_km, owners})
 A cut retypes a cable's spans to :SEVERED_SPAN.
 
 Workloads
@@ -93,8 +94,8 @@ radius needs, and it keeps the 11-hop query exact.
 
 ## Measured results
 
-From `python -m app.services.benchmark` on the development machine. Every number in the UI comes
-from the latest run; none are hardcoded.
+From `python -m app.services.benchmark` on the development machine. The UI shows the latest run;
+nothing is hardcoded. The Proof screen also measures each cut live.
 
 The workload: find the 3 fastest paths Ashburn to Dublin that avoid the damaged Virginia Beach
 trench, with at least 3.2 Tbps free on every hop and a 50 ms ceiling. All three engines load the
@@ -117,8 +118,8 @@ The SQL time grows exponentially with path length. At 4, 6, 8, 10 and 12 hops it
 One caveat: the 0.8 ms figure is the search alone. The full detour tool, including masking and
 restoring about 1,200 low-capacity links, takes about 50 ms.
 
-Planet scan: 603 failures in 15 to 45 s on the development machine, depending on load. Each scan runs roughly 600 WCC
-calls, 300 max-flow runs, 1,800 mutations and 3,000 index lookups.
+Planet scan: 603 failures in 15 to 45 s on the development machine, depending on load. Each scan
+runs roughly 600 WCC calls, 300 max-flow runs, 1,800 mutations and 3,000 index lookups.
 
 ### Ask the graph: eval
 
@@ -135,23 +136,11 @@ from the live graph, not typed in. An answer passes only if it matches:
   depend on Dunant" fails if it simply lists every job;
 - **top**: the first row is the expected item (either one, when two are tied).
 
-The model is not deterministic, so every question runs 3 times. The one question Flash misses, every
-time, is a real mistake we left in rather than hint around: "What is the total design capacity of all
-cables that land in Ireland?" A cable can land at several Irish stations, and Flash either counts it
-twice (`sum(c.design_capacity_tbps)`, 1,026 Tbps) or removes duplicate capacity values instead of
-duplicate cables (`sum(DISTINCT c.design_capacity_tbps)`, 498 Tbps). The answer is 1,022.88 Tbps.
-
-How we got here, all on 2026-10-18:
-
-| Model | Prompt | Score |
-|---|---|---|
-| Gemini 4 Argon | original | 69/69 (one earlier run: 21/23, a dropped connection and a per-hall count) |
-| Gemini 3.8 Flash | original | 59/69: Flash wrote case-insensitive matches with `=~`, which FalkorDB does not support |
-| Gemini 3.8 Flash | + "FalkorDB has no `=~`", + "ready_for_service is an integer year" | **66/69** |
-
-We switched to Flash because Vertex stopped answering Argon in time (over 50 s per call). The two
-prompt additions state facts about FalkorDB and the data, so real questions benefit too; neither
-mentions an eval question.
+Every question runs 3 times, because the model is not deterministic. The one miss is the Ireland
+capacity question: a cable can land at several Irish stations, and Flash sums it more than once
+(1,026 Tbps instead of 1,022.88). We left it in rather than add a hint for it. The first Flash run
+scored 59/69 because Flash used the `=~` operator, which FalkorDB does not support; the prompt now
+says so.
 
 ## Run it
 
@@ -172,10 +161,9 @@ Ports: frontend 3000, API 8010, FalkorDB 6390, FalkorDB browser 3001. They are d
 
 **Gemini 3.8 Flash (optional).** It runs on Google Cloud Vertex AI with your gcloud login; no API key
 is stored. Run `gcloud auth application-default login`, then set `DARKGLASS_VERTEX_PROJECT_ID` (see
-`backend/.env.example`). One setting, `DARKGLASS_GEMINI_MODEL`, picks the model for both the agent and
-Ask the graph. We moved from Gemini 4 Argon because Vertex took over 50 s per call for it on
-2026-10-18; Flash answered the same tool call in 3 to 12 s. Gemini is the default agent. Without it, choose **Playbook** under Agent;
-everything else works except Ask the graph.
+`backend/.env.example`). `DARKGLASS_GEMINI_MODEL` sets the model for both the agent and Ask the
+graph. Gemini is the default agent; without it, choose **Playbook** under Agent, and everything else
+works except Ask the graph.
 
 **Tests** (FalkorDB must be running):
 
@@ -225,12 +213,9 @@ There are two ways to run the agent:
 - **Playbook:** a deterministic loop over the same four tools, with no model. Pick it under Agent if
   Vertex AI is not set up; a Gemini run without credentials stops with an error saying so.
 
-Claude (Anthropic API or Vertex) is also supported in `mcp_server/agent_runner.py`.
-
-The agent moves the most critical traffic class the cut hurt (gradient sync, then checkpoints, then
-backup). When one cut hits several classes, it does not claim more than it did: the result lists
-every tunnel still on the cut cable as `still_down`, the screen says so, and the incident stays
-marked degraded.
+The agent moves the most critical traffic the cut hurt first: gradient sync, then checkpoints, then
+backup. If a cut hits several classes, the tunnels left on the cut cable are listed as `still_down`
+and shown on screen.
 
 ```json
 { "mcpServers": { "darkglass": { "command": "<repo>/backend/.venv/Scripts/python",
