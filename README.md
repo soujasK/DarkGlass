@@ -3,6 +3,8 @@
 **Self-healing networks for AI supercomputers, running on FalkorDB.**
 WeMakeDevs x FalkorDB Graph Hacks, Track 01: Agents That Act on Connected Data.
 
+**▶ [Demo video (3 min)](https://youtu.be/-fh9tKQJ4Z8)** · **[Blog: 419 milliseconds](https://darkglass-blog.onrender.com)** ([also on dev.to](https://dev.to/soujas_k_1ab6dcabf6a196f3/419-milliseconds-how-a-graph-saved-65536-gpus-from-a-ships-anchor-2g4g)) · **[Run it locally](#run-it)**
+
 ![Training restored](docs/screenshots/3-restored.png)
 
 A 65,536-GPU training run spans Ashburn and Dublin. It syncs every 45 ms over undersea fibre, so
@@ -250,7 +252,7 @@ works except Ask the graph.
 
 ```bash
 cd backend
-pytest -q              # 125 unit, scenario and end-to-end tests, about 2 minutes
+pytest -q              # 129 unit, scenario, algorithm and end-to-end tests, about 3 minutes
 pytest -q -m slow      # also the full 603-cable planet scan
 ```
 
@@ -269,6 +271,9 @@ The tests cover:
   fixes. After every scenario the graph is checked for leftover masks, negative capacity and orphaned
   tunnels
 - the Ask-the-graph eval's reference answers and scorer
+- FalkorDB's algorithms against NetworkX on the same edges (`tests/test_algorithms.py`): exact
+  betweenness has the same top 10 stations, the agent's 32-source sample finds the same #1 and at
+  least 8 of the top 10, and `algo.SPpaths` latency equals Dijkstra's
 
 **Manual setup** (what the scripts do): `docker compose up -d`; then in `backend/`:
 `python -m venv .venv`, activate it, `pip install -r requirements.txt`,
