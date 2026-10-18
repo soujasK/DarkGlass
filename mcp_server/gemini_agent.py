@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -71,7 +72,9 @@ def _count_in_engine_bar(result: dict[str, Any]) -> None:
 async def run_gemini(cable_id: str, emit: Emit, system_prompt: str) -> dict[str, Any]:
     from google.genai import types
     from mcp import ClientSession
-    from mcp.client.stdio import StdioServerParameters, stdio_client
+    from mcp.client.stdio import stdio_client
+
+    from mcp_server import server_params
 
     s = get_settings()
     started = time.perf_counter()
@@ -81,7 +84,7 @@ async def run_gemini(cable_id: str, emit: Emit, system_prompt: str) -> dict[str,
                                "transport": "mcp"})
     client = await asyncio.to_thread(_client)
 
-    params = StdioServerParameters(command=sys.executable, args=["-m", "mcp_server.server"], cwd=str(REPO_ROOT))
+    params = server_params()
     summary = ""
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:

@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -343,10 +344,11 @@ async def run_llm_via_mcp(cable_id: str) -> str:
     """Claude driving the tools through the real stdio MCP server (mcp_server/server.py)."""
     from anthropic.lib.tools.mcp import async_mcp_tool
     from mcp import ClientSession
-    from mcp.client.stdio import StdioServerParameters, stdio_client
+    from mcp.client.stdio import stdio_client
 
-    repo_root = Path(__file__).resolve().parents[1]
-    params = StdioServerParameters(command=sys.executable, args=["-m", "mcp_server.server"], cwd=str(repo_root))
+    from mcp_server import server_params
+
+    params = server_params()
     client, extras = _claude_client_and_extras()
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:
