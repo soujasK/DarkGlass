@@ -276,7 +276,7 @@ function BenchmarkBody({
           ))}
         </div>
         <Axis />
-        <div className="text-amber-laser/80">amber rule: 12 ms collective jitter budget</div>
+        {jitterMs != null && <div className="text-amber-laser/80">amber rule: {jitterMs} ms collective jitter budget</div>}
       </div>
       <div>
         <div className="text-muted">CHOKE-POINT AUDIT, BETWEENNESS CENTRALITY, P50 (MS)</div>

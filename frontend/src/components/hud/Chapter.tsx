@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { api } from "@/lib/api";
 import type { Snapshot } from "@/lib/types";
 import { useMeshStore } from "@/store/useMeshStore";
@@ -84,6 +84,62 @@ const CLASS_LABEL: Record<string, string> = {
   CHECKPOINT_BURST: "checkpoint traffic",
   BULK_BACKUP: "backup traffic",
 };
+
+const TOOL_LABEL: Record<string, string> = {
+  trace_severed_blast_radius: "who is hurt",
+  compute_optimal_optical_detour: "detour (SPpaths)",
+  audit_secondary_choke_points: "bottlenecks (betweenness)",
+  execute_spectrum_reallocation: "move traffic",
+};
+
+/** Markdown from the model, as plain readable text. */
+const plain = (md: string) =>
+  md
+    .replace(/\$\\rightarrow\$/g, "→")
+    .replace(/^#+\s*/gm, "")
+    .replace(/\*\*|`/g, "")
+    .replace(/^\s*[*-]\s+/gm, "• ")
+    .trim();
+
+/** The tools the agent called, in order, each opening its Cypher; and the model's own summary. */
+function AgentTrail({ s }: { s: Story }) {
+  const set = useMeshStore((st) => st.set);
+  const [open, setOpen] = useState(false);
+  const summary = s.result?.summary?.trim();
+  if (!s.steps.length) return null;
+  return (
+    <div className="mt-4 max-w-[500px] font-sans text-[13px] text-silica/45">
+      <span>{s.result?.mode === "llm" ? "Tools Gemini chose:" : "Tools run:"} </span>
+      {s.steps.map((step, i) => (
+        <span key={step.step}>
+          {i > 0 && <span className="text-silica/25"> → </span>}
+          <button
+            type="button"
+            title="open the Cypher"
+            onClick={() => set({ drawerOpen: true, selectedTrace: { step: step.step, index: 0 } })}
+            className="text-phosphor/80 hover:underline"
+          >
+            {TOOL_LABEL[step.tool] ?? step.tool}
+          </button>
+          {step.result?.engine_ms != null && <span className="font-mono text-[11px]"> {step.result.engine_ms.toFixed(1)} ms</span>}
+        </span>
+      ))}
+      {summary && (
+        <div className="relative mt-2">
+          <button type="button" onClick={() => setOpen((o) => !o)} className="text-silica/60 hover:text-silica">
+            {open ? "Hide" : "Read"} Gemini&apos;s summary
+          </button>
+          {open && (
+            // Floats over the stats instead of pushing the column into the header and engine bar.
+            <p className="absolute left-0 top-full z-40 mt-2 max-h-[240px] w-[500px] overflow-y-auto whitespace-pre-wrap rounded-xl border border-white/[0.1] bg-[#0d1626] p-4 text-[12px] leading-[18px] text-silica/80 shadow-[0_30px_80px_rgba(0,0,0,0.85)]">
+              {plain(summary)}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /** Why this route: the decision explained with what the graph returned at each step. */
 function why(s: Story): string | null {
@@ -350,6 +406,7 @@ export default function Chapter() {
             {result.still_down.length === 1 ? "is" : "are"} still on the cut cable. The agent moves the most critical traffic first.
           </p>
         )}
+        <AgentTrail s={s} />
         <div className="gap-section flex gap-14">
           {stats.map(([v, k]) => (
             <div key={k}>
