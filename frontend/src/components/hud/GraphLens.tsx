@@ -1,6 +1,7 @@
 "use client";
 
 import { useMeshStore } from "@/store/useMeshStore";
+import FocusTag from "./FocusTag";
 import { TOOL_ORDER, useStory } from "@/store/useStory";
 
 const W = 700;
@@ -98,6 +99,7 @@ export default function GraphLens() {
         <div className="chapter-in mb-4">
           <div className="font-sans text-[13px] font-medium text-silica/85">
             {traversal.hops}-hop traversal in FalkorDB <span className="font-normal text-silica/65">· {traversal.engine_ms.toFixed(1)} ms</span>
+            <FocusTag className="ml-2">Multi-hop reasoning</FocusTag>
           </div>
           <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 font-mono text-[12px] leading-[19px]">
             {traversal.nodes.map((n: string, i: number) => (

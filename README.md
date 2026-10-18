@@ -14,6 +14,18 @@ out who is hurt with an 11-hop traversal from the seabed to the GPU, finds the f
 avoids the damaged trench, checks it for bottlenecks, and moves the traffic. FalkorDB's part of the
 fix takes under half a second; with Gemini choosing the tools, the whole fix takes 35 to 50 s.
 
+## Track 01 key focus: where to see each one
+
+Each item is also labelled in the app with a small tag carrying the same name.
+
+| Key focus | Where to see it | Code |
+|---|---|---|
+| **Multi-hop reasoning** | Cut a cable. The graph panel shows the 11-hop traversal from landing station to cable, tunnel, border router, three switch tiers, server, NIC, GPU, ring and job, with the GPUs, servers, racks and halls it reaches | `PATH`, `IMPACT` in `mcp_server/tools/blast_radius.py` |
+| **Graph queries and algorithms as agent tools** | The four steps while the agent works, and "Tools Gemini chose" on the result: the traversal, `algo.SPpaths`, `algo.betweenness`, and an atomic write. The planet scan adds `algo.WCC`, `algo.maxFlow` and `GRAPH.COPY` | `mcp_server/tools/` |
+| **Tool selection through MCP** | "Gemini 3.8 Flash is choosing tools over MCP": the agent discovers the tools with MCP `list_tools` and calls the ones it picks with `call_tool` | `mcp_server/gemini_agent.py`, `mcp_server/server.py` |
+| **Actions based on what the graph shows** | "Now on Havfrue/AEC-2": the detour's limits come from the traversal's answer, MAREA is excluded because the graph puts it in the same trench, then bandwidth is reserved and the tunnel's `CARRIED_BY` edge moves. The fix is written to graph memory | `mcp_server/tools/spectrum_allocator.py`, `backend/app/services/chaos_engine.py` |
+| **Explainable results** | "Why this route", each tool's exact Cypher (click it), Gemini's summary, "Not fixed yet" for traffic left behind, and the Proof tab, which answers the same cut in FalkorDB, NetworkX and SQL | `frontend/src/components/hud/Chapter.tsx`, `backend/app/services/live_proof.py` |
+
 ## What you see
 
 | | |

@@ -6,6 +6,7 @@ import type { Snapshot } from "@/lib/types";
 import { useMeshStore } from "@/store/useMeshStore";
 import { TOOL_ORDER, placeName, useStory, type Story } from "@/store/useStory";
 import CablePicker, { CableCard } from "./CablePicker";
+import FocusTag from "./FocusTag";
 import Roll from "./Roll";
 
 const QUESTIONS = ["Who is hurt?", "Find a safe detour", "Check for bottlenecks", "Move the traffic"];
@@ -125,6 +126,7 @@ function AgentTrail({ s }: { s: Story }) {
   if (!s.steps.length) return null;
   return (
     <div className="mt-4 max-w-[500px] font-sans text-[13px] text-silica/65">
+      <FocusTag className="mr-2">Graph queries and algorithms as agent tools</FocusTag>
       <span>{s.result?.mode === "llm" ? "Tools Gemini chose:" : "Tools run:"} </span>
       {s.steps.map((step, i) => (
         <span key={step.step}>
@@ -377,8 +379,12 @@ export default function Chapter() {
       <>
         <Status dot="bg-phosphor animate-pulse">
           {st.agentMode === "llm" ? `${prettyModel(st.health?.llm_model)} is choosing tools over MCP` : "The playbook is running the four tools"}
+          {st.agentMode === "llm" && <FocusTag className="ml-1">Tool selection through MCP</FocusTag>}
         </Status>
         <h1 className={`mt-3 min-h-[2.1em] ${H1}`}>{QUESTIONS[next === -1 ? 3 : next]}</h1>
+        <div className="mt-8">
+          <FocusTag>Graph queries and algorithms as agent tools</FocusTag>
+        </div>
         <Reasoning s={s} />
       </>
     );
@@ -404,6 +410,7 @@ export default function Chapter() {
         <h1 className={`mt-3 ${H1}`}>Fixed in {duration(result.agent_wall_ms)}</h1>
         {crossing && (
           <p className={LINE}>
+            <FocusTag className="mr-2">Actions based on what the graph shows</FocusTag>
             Now on {s.cableName(crossing.cable)}, {delta <= 0 ? `${Math.abs(delta).toFixed(1)} ms faster` : `+${delta.toFixed(1)} ms`}.
             {result.mode === "llm" && (
               <span className="text-silica/55">
@@ -412,7 +419,12 @@ export default function Chapter() {
             )}
           </p>
         )}
-        {why(s) && <p className="mt-3 max-w-[480px] font-sans text-[14px] leading-[21px] text-silica/65">{why(s)}</p>}
+        {why(s) && (
+          <p className="mt-3 max-w-[480px] font-sans text-[14px] leading-[21px] text-silica/65">
+            <FocusTag className="mr-2">Explainable results</FocusTag>
+            {why(s)}
+          </p>
+        )}
         {!!result.still_down?.length && (
           <p className="mt-3 max-w-[480px] font-sans text-[14px] leading-[21px] text-crimson/80">
             Not fixed yet: {[...new Set(result.still_down.map((t) => CLASS_LABEL[t.traffic_class] ?? t.traffic_class))].join(" and ")}{" "}
