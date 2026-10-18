@@ -32,12 +32,12 @@ export function TopBar() {
   return (
     <header className="absolute inset-x-0 top-0 z-30 flex items-center justify-between px-16 pt-8">
       <div className="flex items-baseline gap-4">
-        <span className="font-sans text-[15px] font-semibold tracking-[-0.02em] text-silica">DarkGlass</span>
+        <span className="font-sans text-[15px] font-semibold tracking-[-0.02em] text-ink">DarkGlass</span>
         <a
           href="https://www.submarinecablemap.com"
           target="_blank"
           rel="noreferrer"
-          className="font-sans text-[12px] text-silica/55 transition-colors hover:text-silica/80"
+          className="font-sans text-[12px] text-ink-3 transition-colors hover:text-ink-1"
           title="Cable and landing-station data: TeleGeography Submarine Cable Map, CC BY-NC-SA 3.0"
         >
           Cable data: TeleGeography
@@ -51,7 +51,7 @@ export function TopBar() {
             type="button"
             onClick={() => st.set({ mode: m.key })}
             className={`rounded-full px-4 py-1.5 font-sans text-[13px] tracking-tight transition-colors ${
-              st.mode === m.key ? "bg-silica text-void" : "text-silica/75 hover:text-silica"
+              st.mode === m.key ? "bg-silica text-void" : "text-ink-1 hover:text-ink"
             }`}
           >
             {m.label}
@@ -59,12 +59,12 @@ export function TopBar() {
         ))}
       </nav>
 
-      <div className="flex items-center gap-6 font-sans text-[13px] text-silica/65">
+      <div className="flex items-center gap-6 font-sans text-[13px] text-ink-2">
         <span className="flex items-center gap-2">
           <span className={`h-1.5 w-1.5 rounded-full ${up ? "bg-[#34d399]" : "bg-crimson"}`} />
           {up ? "Live" : "Offline"}
         </span>
-        <button type="button" onClick={reset} className="transition-colors hover:text-silica">
+        <button type="button" onClick={reset} className="transition-colors hover:text-ink">
           Reset
         </button>
       </div>

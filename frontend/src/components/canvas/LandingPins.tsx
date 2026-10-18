@@ -68,7 +68,7 @@ function Label({ station, tone, placement }: { station: Station; tone: Tone; pla
     const facing = tmp.copy(camera.position).sub(anchor).normalize().dot(anchor.clone().normalize());
     ref.current.style.opacity = String(THREE.MathUtils.smoothstep(facing, 0.05, 0.3));
   });
-  const color = tone === "amber" ? "text-amber-laser" : tone === "crimson" ? "text-crimson" : "text-silica";
+  const color = tone === "amber" ? "text-amber-laser" : tone === "crimson" ? "text-crimson" : "text-ink";
   const rule = tone === "amber" ? "bg-amber-laser/60" : tone === "crimson" ? "bg-crimson/70" : "bg-silica/40";
   const p = PLACEMENTS[placement];
   const elbowY = p.up ? -p.len : p.len;

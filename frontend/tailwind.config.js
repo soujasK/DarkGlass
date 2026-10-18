@@ -13,11 +13,13 @@ module.exports = {
         fault: "#1E293B",
         crimson: "#E5534B",
         silica: "#E6E8EB",
+        // solid neutral text greys: crisper than translucent white over navy
+        ink: { DEFAULT: "#EEF0F3", 1: "#D2D7DD", 2: "#AFB6BF", 3: "#8F98A3", 4: "#7C8591" },
         muted: "#8B95A3",
       },
       fontFamily: {
-        mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"],
-        sans: ["var(--font-geist-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
+        sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       fontSize: { hud: ["10px", { lineHeight: "14px", letterSpacing: "0.08em" }] },
     },

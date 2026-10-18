@@ -97,26 +97,26 @@ export default function GraphLens() {
     <div className="chapter-in-late pointer-events-none absolute bottom-[clamp(56px,8vh,84px)] right-[48px] z-20 w-[clamp(480px,37vw,600px)] rounded-xl border border-white/[0.08] bg-[#070d19]/[0.92] px-5 pb-4 pt-5">
       {traced && traversal && (
         <div className="chapter-in mb-4">
-          <div className="font-sans text-[13px] font-medium text-silica/85">
-            {traversal.hops}-hop traversal in FalkorDB <span className="font-normal text-silica/65">· {traversal.engine_ms.toFixed(1)} ms</span>
+          <div className="font-sans text-[13px] font-medium text-ink-1">
+            {traversal.hops}-hop traversal in FalkorDB <span className="font-normal text-ink-2">· {traversal.engine_ms.toFixed(1)} ms</span>
             <FocusTag className="ml-2">Multi-hop reasoning</FocusTag>
           </div>
           <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 font-mono text-[12px] leading-[19px]">
             {traversal.nodes.map((n: string, i: number) => (
               <span key={i} className="flex items-baseline gap-2">
                 {i > 0 && (
-                  <span className="text-[10.5px] text-silica/65">
+                  <span className="text-[10.5px] text-ink-2">
                     {(traversal.forward?.[i - 1] ?? i === 1) ? `${traversal.rels[i - 1]}→` : `←${traversal.rels[i - 1]}`}
                   </span>
                 )}
-                <span className={i === 1 ? "text-crimson" : i === traversal.nodes.length - 1 ? "text-silica" : "text-silica/85"}>
+                <span className={i === 1 ? "text-crimson" : i === traversal.nodes.length - 1 ? "text-ink" : "text-ink-1"}>
                   {String(n).replace(" MoE pretrain", "")}
                 </span>
               </span>
             ))}
           </div>
           {impact?.gpus > 0 && (
-            <div className="mt-3 flex gap-5 font-sans text-[12.5px] text-silica/75">
+            <div className="mt-3 flex gap-5 font-sans text-[12.5px] text-ink-1">
               {([[impact.gpus, "GPUs"], [impact.servers, "servers"], [impact.racks, "racks"], [impact.halls, "halls"]] as [number, string][]).map(([n, l]) => (
                 <span key={l}><span className="text-crimson">{n.toLocaleString()}</span> {l}</span>
               ))}
@@ -196,7 +196,7 @@ export default function GraphLens() {
         )}
 
       </svg>
-      <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 border-t border-white/[0.06] pt-3 font-sans text-[12px] text-silica/70">
+      <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 border-t border-white/[0.06] pt-3 font-sans text-[12px] text-ink-2">
         {([[CYAN, "Live cable or link"], [CRIMSON, "Cut, or in the cut's trench"], [AMBER, "Detour the agent chose"]] as [string, string][]).map(([c, l]) => (
           <span key={l} className="flex items-center gap-2">
             <span className="inline-block h-[2px] w-4 rounded" style={{ background: c }} />

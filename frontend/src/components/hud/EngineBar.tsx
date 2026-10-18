@@ -39,9 +39,9 @@ export default function EngineBar() {
         type="button"
         onClick={() => set({ drawerOpen: true })}
         title="FalkorDB queries DarkGlass has run in this scope, by kind of work (the screen's own refresh queries are not counted). Click to see the queries."
-        className="flex w-full flex-wrap items-baseline gap-x-5 gap-y-1 border-t border-white/[0.07] pt-3 text-left font-sans text-[12px] text-silica/60 transition-colors hover:text-silica/75"
+        className="flex w-full flex-wrap items-baseline gap-x-5 gap-y-1 border-t border-white/[0.07] pt-3 text-left font-sans text-[12px] text-ink-3 transition-colors hover:text-ink-1"
       >
-        <span className="font-medium text-silica/75">FalkorDB</span>
+        <span className="font-medium text-ink-1">FalkorDB</span>
         <span className="tabular-nums">
           {total.toLocaleString()} {total === 1 ? "query" : "queries"} {base?.scope ?? "this session"}
         </span>
@@ -54,13 +54,13 @@ export default function EngineBar() {
             <span
               key={c.key}
               title={`${c.name}: ${c.does}`}
-              className={`transition-colors duration-300 ${hot ? "text-phosphor" : "text-silica/75"}`}
+              className={`transition-colors duration-300 ${hot ? "text-phosphor" : "text-ink-1"}`}
             >
               {LABEL[c.key] ?? c.name} <span className="tabular-nums">{fmtCount(n)}</span>
             </span>
           );
         })}
-        <span className="ml-auto text-silica/55">View queries</span>
+        <span className="ml-auto text-ink-3">View queries</span>
       </button>
     </footer>
   );

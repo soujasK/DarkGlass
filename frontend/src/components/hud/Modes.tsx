@@ -10,11 +10,11 @@ function Kicker({ children, tone = "text-muted" }: { children: ReactNode; tone?:
 }
 function H1({ children }: { children: ReactNode }) {
   return (
-    <h1 className="display-h1 font-sans font-semibold tracking-[-0.04em] text-silica">{children}</h1>
+    <h1 className="display-h1 font-sans font-semibold tracking-[-0.04em] text-ink">{children}</h1>
   );
 }
 function Lead({ children }: { children: ReactNode }) {
-  return <p className="mt-5 max-w-[440px] font-sans text-[17px] leading-[26px] text-silica/70">{children}</p>;
+  return <p className="mt-5 max-w-[440px] font-sans text-[17px] leading-[26px] text-ink-2">{children}</p>;
 }
 function Action({ children, onClick, disabled }: { children: ReactNode; onClick: () => void; disabled?: boolean }) {
   return (
@@ -31,7 +31,7 @@ function Action({ children, onClick, disabled }: { children: ReactNode; onClick:
 /** Safe area between the top bar and the engine bar; content is centred vertically inside it. */
 function Shell({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
   return (
-    <div className={`chapter-in absolute bottom-[clamp(72px,10vh,104px)] left-[64px] top-[clamp(96px,13vh,120px)] z-20 flex flex-col justify-center ${wide ? "w-[620px]" : "w-[520px]"}`}>
+    <div className={`chapter-in absolute bottom-[clamp(72px,10vh,104px)] left-[64px] top-[clamp(96px,13vh,120px)] z-40 flex flex-col justify-center ${wide ? "w-[620px]" : "w-[520px]"}`}>
       <div>{children}</div>
     </div>
   );
@@ -48,7 +48,7 @@ function Board({ title, cards, line, onPick }: {
   if (!cards.length) return null;
   return (
     <div>
-      <div className="mb-2 font-sans text-[13px] text-silica/60">{title}</div>
+      <div className="mb-2 font-sans text-[13px] text-ink-3">{title}</div>
       {cards.slice(0, 3).map((c) => (
         <button
           key={c.id}
@@ -57,8 +57,8 @@ function Board({ title, cards, line, onPick }: {
           className="flex w-full items-baseline justify-between gap-4 border-t border-white/[0.06] py-2.5 text-left"
           title={`Cut ${c.name} in Incident mode`}
         >
-          <span className="truncate font-sans text-[15px] tracking-tight text-silica">{c.name}</span>
-          <span className="shrink-0 font-sans text-[13px] tabular-nums text-silica/65">{line(c)}</span>
+          <span className="truncate font-sans text-[15px] tracking-tight text-ink">{c.name}</span>
+          <span className="shrink-0 font-sans text-[13px] tabular-nums text-ink-2">{line(c)}</span>
         </button>
       ))}
     </div>
@@ -84,14 +84,14 @@ export function ScanPanel() {
     return (
       <Shell>
         <div className="flex items-baseline gap-3 font-sans font-semibold tracking-[-0.04em]">
-          <span className="text-[96px] leading-none text-silica tabular-nums">{scan.done}</span>
-          <span className="text-[32px] text-silica/55">/ {scan.total || st.catalog.length}</span>
+          <span className="text-[96px] leading-none text-ink tabular-nums">{scan.done}</span>
+          <span className="text-[32px] text-ink-3">/ {scan.total || st.catalog.length}</span>
         </div>
         <Lead>cables cut inside FalkorDB.</Lead>
         <div className="mt-6 h-px w-full max-w-[420px] bg-white/[0.08]">
           <div className="h-px bg-phosphor transition-[width] duration-300" style={{ width: `${(100 * scan.done) / (scan.total || st.catalog.length)}%` }} />
         </div>
-        <div className="mt-3 font-sans text-[13px] tabular-nums text-silica/60">{(scan.elapsedMs / 1000).toFixed(1)} s</div>
+        <div className="mt-3 font-sans text-[13px] tabular-nums text-ink-3">{(scan.elapsedMs / 1000).toFixed(1)} s</div>
       </Shell>
     );
   }
@@ -103,10 +103,10 @@ export function ScanPanel() {
           <H1>
             {s.scenarios} cables cut
             <br />
-            <span className="text-silica/60">in {(s.duration_ms / 1000).toFixed(0)} s</span>
+            <span className="text-ink-3">in {(s.duration_ms / 1000).toFixed(0)} s</span>
           </H1>
           <Lead>Every subsea cable on Earth, failed once.</Lead>
-          <button type="button" onClick={start} className="mt-6 font-sans text-[14px] text-silica/60 transition-colors hover:text-silica">
+          <button type="button" onClick={start} className="mt-6 font-sans text-[14px] text-ink-3 transition-colors hover:text-ink">
             Run again
           </button>
         </div>
@@ -190,13 +190,13 @@ export function AskPanel() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Ask anything about the network"
-          className="w-full border-b border-white/15 bg-transparent pb-3 font-sans text-[18px] tracking-tight text-silica placeholder:text-silica/50 focus:border-phosphor focus:outline-none"
+          className="w-full border-b border-white/15 bg-transparent pb-3 font-sans text-[18px] tracking-tight text-ink placeholder:text-ink-4 focus:border-phosphor focus:outline-none"
         />
       </form>
       {!result && !loading && (
         <div className="mt-5 space-y-2">
           {EXAMPLES.map((e) => (
-            <button key={e} type="button" onClick={() => submit(e)} className="block text-left font-sans text-[14px] text-silica/60 transition-colors hover:text-silica">
+            <button key={e} type="button" onClick={() => submit(e)} className="block text-left font-sans text-[14px] text-ink-3 transition-colors hover:text-ink">
               {e}
             </button>
           ))}
@@ -212,7 +212,7 @@ export function AskPanel() {
         <div className="mt-6">
           <div className="flex gap-6 font-sans text-[13px] tabular-nums">
             <span className="text-phosphor">FalkorDB {result.engine_ms?.toFixed(1)} ms</span>
-            <span className="text-silica/60">
+            <span className="text-ink-3">
               {result.row_count} {result.row_count === 1 ? "row" : "rows"}
               {(result.row_count ?? 0) > SHOWN_ROWS ? `, first ${SHOWN_ROWS} shown` : ""}
             </span>
@@ -224,7 +224,7 @@ export function AskPanel() {
             {result.cypher}
           </pre>
           {result.row_count === 0 && (
-            <p className="mt-3 font-sans text-[13px] text-silica/70">
+            <p className="mt-3 font-sans text-[13px] text-ink-2">
               Nothing in the graph matches right now. The answer reflects the live graph, including any cut or reroute.
             </p>
           )}
@@ -239,7 +239,7 @@ export function AskPanel() {
               </thead>
               <tbody>
                 {(result.rows ?? []).slice(0, SHOWN_ROWS).map((r, i) => (
-                  <tr key={i} className="border-t border-white/[0.05] text-silica/80">
+                  <tr key={i} className="border-t border-white/[0.05] text-ink-1">
                     {cols.slice(0, 4).map((c) => (
                       <td key={c} className="max-w-[160px] truncate py-1 pr-3">
                         {Array.isArray(r[c]) ? (r[c] as unknown[]).join(", ") : String(r[c] ?? "")}
@@ -277,12 +277,12 @@ type Row = { k: string; ms: number; hero?: boolean; timeout?: boolean; agree?: b
 function Bars({ title, rows, answer, note }: { title: string; rows: Row[]; answer: string; note?: string }) {
   return (
     <div>
-      <div className="font-sans text-[13px] text-silica/60">{title}</div>
+      <div className="font-sans text-[13px] text-ink-3">{title}</div>
       {rows.map((row) => (
         <div key={row.k} className="mt-3">
           <div className="flex justify-between font-sans text-[13px] tabular-nums">
-            <span className={row.hero ? "text-phosphor" : "text-silica/75"}>{row.k}</span>
-            <span className={row.hero ? "text-phosphor" : row.timeout ? "text-crimson/80" : "text-silica/80"}>
+            <span className={row.hero ? "text-phosphor" : "text-ink-1"}>{row.k}</span>
+            <span className={row.hero ? "text-phosphor" : row.timeout ? "text-crimson/80" : "text-ink-1"}>
               {row.timeout ? `> ${fmt(row.ms)}, gave up` : fmt(row.ms)}
               {row.agree === false && <span className="text-crimson"> / different answer</span>}
             </span>
@@ -295,8 +295,8 @@ function Bars({ title, rows, answer, note }: { title: string; rows: Row[]; answe
           </div>
         </div>
       ))}
-      <div className="mt-4 font-sans text-[13px] text-silica/75">{answer}</div>
-      {note && <div className="mt-1 font-sans text-[12px] leading-[18px] text-silica/55">{note}</div>}
+      <div className="mt-4 font-sans text-[13px] text-ink-1">{answer}</div>
+      {note && <div className="mt-1 font-sans text-[12px] leading-[18px] text-ink-3">{note}</div>}
     </div>
   );
 }
@@ -327,15 +327,15 @@ export function ProofPanel() {
     const name = st.catalog.find((c) => c.id === proof.cableId)?.name ?? proof.cableId;
     return (
       <Shell wide>
-        <Kicker tone="text-silica/75">Live proof</Kicker>
+        <Kicker tone="text-ink-1">Live proof</Kicker>
         <H1>
           Measuring the
           <br />
-          <span className="text-silica/60">{name} cut</span>
+          <span className="text-ink-3">{name} cut</span>
         </H1>
         <ol className="mt-8 space-y-2 font-sans text-[14px]">
           {STAGES.map(([k, label], i) => (
-            <li key={k} className={i < at ? "text-silica/65" : i === at ? "text-phosphor" : "text-silica/50"}>
+            <li key={k} className={i < at ? "text-ink-2" : i === at ? "text-phosphor" : "text-ink-4"}>
               {label}
             </li>
           ))}
@@ -347,7 +347,7 @@ export function ProofPanel() {
   if (!r) {
     return (
       <Shell>
-        <Kicker tone="text-silica/75">Proof</Kicker>
+        <Kicker tone="text-ink-1">Proof</Kicker>
         <H1>Why a graph database</H1>
         <Lead>Pick any cable. FalkorDB cuts it in a sandbox copy, then SQL and NetworkX answer the agent&apos;s questions on the same snapshot.</Lead>
         {incCable ? <Action onClick={() => start()}>Prove it on this cut</Action> : picker}
@@ -373,11 +373,11 @@ export function ProofPanel() {
   const hinted = e.sqlite.detour_hinted_ms;
   return (
     <Shell wide>
-      <Kicker tone="text-silica/75">Live proof on the {r.cable_name} cut</Kicker>
+      <Kicker tone="text-ink-1">Live proof on the {r.cable_name} cut</Kicker>
       <H1>
         {lower ? "Over " : ""}{Math.round(r.speedup.vs_sqlite).toLocaleString()}x faster
         <br />
-        <span className="text-silica/60">than SQL on this cut</span>
+        <span className="text-ink-3">than SQL on this cut</span>
       </H1>
       <div className="mt-8 grid max-w-[600px] grid-cols-2 gap-10">
         <Bars
@@ -394,7 +394,7 @@ export function ProofPanel() {
             : undefined}
         />
       </div>
-      <p className="mt-8 max-w-[600px] font-sans text-[13px] leading-[20px] text-silica/55">
+      <p className="mt-8 max-w-[600px] font-sans text-[13px] leading-[20px] text-ink-3">
         Same snapshot of {r.snapshot.edges.toLocaleString()} edges in all three{r.parity.verified ? `, sha256 ${r.parity.falkordb.slice(0, 8)} verified` : ""}.
         {" "}Wall-clock, median of {r.runs.falkordb}. Answers match{lower ? " where SQL finished" : ""}.
       </p>

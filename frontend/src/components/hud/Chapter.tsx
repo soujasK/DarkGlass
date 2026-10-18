@@ -17,8 +17,8 @@ const duration = (ms: number) => (ms >= 2000 ? `${(ms / 1000).toFixed(1)} s` : `
 const money = (v: number, dp = 2) =>
   `$${v.toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp })}`;
 
-const H1 = "display-h1 font-sans font-semibold tracking-[-0.04em] text-silica";
-const LINE = "gap-line font-sans text-[17px] leading-[26px] text-silica/70";
+const H1 = "display-h1 font-sans font-semibold tracking-[-0.04em] text-ink";
+const LINE = "gap-line font-sans text-[17px] leading-[26px] text-ink-2";
 
 function Primary({ children, onClick, tone }: { children: ReactNode; onClick: () => void; tone: "crimson" | "amber" }) {
   const cls =
@@ -39,7 +39,7 @@ function Primary({ children, onClick, tone }: { children: ReactNode; onClick: ()
 /** One line of state: a coloured dot and a plain sentence. */
 function Status({ children, dot }: { children: ReactNode; dot: string }) {
   return (
-    <div className="flex items-center gap-2 font-sans text-[14px] text-silica/80">
+    <div className="flex items-center gap-2 font-sans text-[14px] text-ink-1">
       <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`} />
       {children}
     </div>
@@ -50,8 +50,8 @@ function Status({ children, dot }: { children: ReactNode; dot: string }) {
 function Fact({ k, children }: { k: string; children: ReactNode }) {
   return (
     <>
-      <dt className="text-silica/65">{k}</dt>
-      <dd className="text-silica/85">{children}</dd>
+      <dt className="text-ink-2">{k}</dt>
+      <dd className="text-ink-1">{children}</dd>
     </>
   );
 }
@@ -67,13 +67,13 @@ function AgentPicker() {
   ];
   return (
     <div className="mt-5 flex items-center gap-1 font-sans text-[13px]">
-      <span className="mr-2 text-silica/55">Agent</span>
+      <span className="mr-2 text-ink-3">Agent</span>
       {opts.map(([k, label]) => (
         <button
           key={k}
           type="button"
           onClick={() => set({ agentMode: k })}
-          className={`rounded-full px-3 py-1 transition-colors ${mode === k ? "bg-white/[0.08] text-silica" : "text-silica/60 hover:text-silica"}`}
+          className={`rounded-full px-3 py-1 transition-colors ${mode === k ? "bg-white/[0.08] text-ink" : "text-ink-3 hover:text-ink"}`}
         >
           {label}
         </button>
@@ -125,12 +125,12 @@ function AgentTrail({ s }: { s: Story }) {
   const summary = s.result?.summary?.trim();
   if (!s.steps.length) return null;
   return (
-    <div className="mt-4 max-w-[500px] font-sans text-[13px] text-silica/65">
+    <div className="mt-4 max-w-[500px] font-sans text-[13px] text-ink-2">
       <FocusTag className="mr-2">Graph queries and algorithms as agent tools</FocusTag>
       <span>{s.result?.mode === "llm" ? "Tools Gemini chose:" : "Tools run:"} </span>
       {s.steps.map((step, i) => (
         <span key={step.step}>
-          {i > 0 && <span className="text-silica/50"> → </span>}
+          {i > 0 && <span className="text-ink-4"> → </span>}
           <button
             type="button"
             title="open the Cypher"
@@ -144,12 +144,12 @@ function AgentTrail({ s }: { s: Story }) {
       ))}
       {summary && (
         <div className="relative mt-2">
-          <button type="button" onClick={() => setOpen((o) => !o)} className="text-silica/75 hover:text-silica">
+          <button type="button" onClick={() => setOpen((o) => !o)} className="text-ink-1 hover:text-ink">
             {open ? "Hide" : "Read"} Gemini&apos;s summary
           </button>
           {open && (
             // Floats over the stats instead of pushing the column into the header and engine bar.
-            <p className="absolute left-0 top-full z-40 mt-2 max-h-[240px] w-[500px] overflow-y-auto whitespace-pre-wrap rounded-xl border border-white/[0.1] bg-[#0d1626] p-4 text-[12px] leading-[18px] text-silica/80 shadow-[0_30px_80px_rgba(0,0,0,0.85)]">
+            <p className="absolute left-0 top-full z-40 mt-2 max-h-[240px] w-[500px] overflow-y-auto whitespace-pre-wrap rounded-xl border border-white/[0.1] bg-[#0d1626] p-4 text-[12px] leading-[18px] text-ink-1 shadow-[0_30px_80px_rgba(0,0,0,0.85)]">
               {plain(summary)}
             </p>
           )}
@@ -218,9 +218,9 @@ function Reasoning({ s }: { s: Story }) {
               step ? "opacity-100" : "opacity-60"
             }`}
           >
-            <span className="font-sans text-[15px] tracking-tight text-silica">{q}</span>
+            <span className="font-sans text-[15px] tracking-tight text-ink">{q}</span>
             <span className="flex items-baseline gap-4">
-              <span className="font-sans text-[13px] text-silica/65">{r ? answer(i, s) : ""}</span>
+              <span className="font-sans text-[13px] text-ink-2">{r ? answer(i, s) : ""}</span>
               {r ? (
                 <button
                   type="button"
@@ -314,7 +314,7 @@ export default function Chapter() {
             </Fact>
           )}
         </dl>
-        <p className="mt-3 font-sans text-[13px] text-silica/55">A modelled cluster on the real TeleGeography cable map.</p>
+        <p className="mt-3 font-sans text-[13px] text-ink-3">A modelled cluster on the real TeleGeography cable map.</p>
 
         <div className="gap-section">
           <div>
@@ -331,13 +331,13 @@ export default function Chapter() {
     body = s.stalls ? (
       <>
         <Status dot="bg-crimson">{inc.cable_name} is cut. Gradient sync has stalled.</Status>
-        <div className="mt-6 font-sans text-[13px] text-silica/65">Estimated cost so far</div>
+        <div className="mt-6 font-sans text-[13px] text-ink-2">Estimated cost so far</div>
         <div className="display-money mt-1 font-sans font-semibold tracking-[-0.04em] text-crimson">
           <Roll text={money(s.lossUsd)} />
         </div>
         <p className={LINE}>
           {s.gpus.toLocaleString()} GPUs frozen.{" "}
-          <span className="text-silica/55">Cost at an estimated {money(s.ratePerSec * 3600, 0)} an hour.</span>
+          <span className="text-ink-3">Cost at an estimated {money(s.ratePerSec * 3600, 0)} an hour.</span>
         </p>
         <Memory history={inc.blast_radius?.history} cable={inc.cable_name} />
         <Primary tone="amber" onClick={fix}>
@@ -413,14 +413,14 @@ export default function Chapter() {
             <FocusTag className="mr-2">Actions based on what the graph shows</FocusTag>
             Now on {s.cableName(crossing.cable)}, {delta <= 0 ? `${Math.abs(delta).toFixed(1)} ms faster` : `+${delta.toFixed(1)} ms`}.
             {result.mode === "llm" && (
-              <span className="text-silica/55">
+              <span className="text-ink-3">
                 {" "}Decided by {prettyModel(st.health?.llm_model)} over MCP; FalkorDB did the work in {Math.round(result.graph_engine_ms)} ms.
               </span>
             )}
           </p>
         )}
         {why(s) && (
-          <p className="mt-3 max-w-[480px] font-sans text-[14px] leading-[21px] text-silica/65">
+          <p className="mt-3 max-w-[480px] font-sans text-[14px] leading-[21px] text-ink-2">
             <FocusTag className="mr-2">Explainable results</FocusTag>
             {why(s)}
           </p>
@@ -435,8 +435,8 @@ export default function Chapter() {
         <div className="gap-section flex gap-14">
           {stats.map(([v, k]) => (
             <div key={k}>
-              <div className="font-sans text-[30px] font-semibold tracking-[-0.03em] text-silica">{v}</div>
-              <div className="mt-1 font-sans text-[13px] text-silica/60">{k}</div>
+              <div className="font-sans text-[30px] font-semibold tracking-[-0.03em] text-ink">{v}</div>
+              <div className="mt-1 font-sans text-[13px] text-ink-3">{k}</div>
             </div>
           ))}
         </div>
@@ -466,7 +466,7 @@ export default function Chapter() {
   }
 
   return (
-    <div className="absolute bottom-[clamp(64px,9vh,96px)] left-[64px] top-[clamp(96px,13vh,120px)] z-20 flex w-[520px] flex-col justify-center">
+    <div className="absolute bottom-[clamp(64px,9vh,96px)] left-[64px] top-[clamp(96px,13vh,120px)] z-40 flex w-[520px] flex-col justify-center">
       <div key={phase} className="chapter-in">
         {body}
       </div>

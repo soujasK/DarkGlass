@@ -22,17 +22,17 @@ function HopDiagram() {
         <div className="flex flex-wrap items-center gap-y-4">
           {segs.map((s, i) => (
             <div key={i} className="flex items-center">
-              {i === 0 && <span className="text-silica">{s.from}</span>}
+              {i === 0 && <span className="text-ink">{s.from}</span>}
               <div className="mx-2 flex flex-col items-center">
                 <span className={s.subsea ? "text-amber-laser" : "text-muted"}>{s.label}</span>
                 <span className={`my-1 h-px w-24 ${s.subsea ? "bg-amber-laser/70" : "bg-white/20"}`} />
                 <span className="text-muted">{s.latency.toFixed(2)} ms</span>
               </div>
-              <span className="text-silica">{s.to}</span>
+              <span className="text-ink">{s.to}</span>
             </div>
           ))}
         </div>
-        <div className="mt-4 text-silica">
+        <div className="mt-4 text-ink">
           {detour.total_latency_ms?.toFixed(4)} ms one-way /{" "}
           <span className="text-muted">tau = n/c = 4.897 us/km</span>
         </div>
@@ -56,7 +56,7 @@ function HopDiagram() {
             <div key={l.k} className="flex items-start gap-3">
               <span className="w-20 shrink-0 text-muted">{l.k}</span>
               <span className={`mt-[7px] h-px w-6 shrink-0 ${i === 0 ? "bg-crimson" : "bg-white/20"}`} />
-              <span className={i === 0 ? "text-crimson" : "text-silica"}>{l.v}</span>
+              <span className={i === 0 ? "text-crimson" : "text-ink"}>{l.v}</span>
             </div>
           ))}
         </div>
@@ -101,7 +101,7 @@ function CypherPanel() {
                   key={t.label}
                   type="button"
                   onClick={() => set({ selectedTrace: { step: g.step, index: i } })}
-                  className={`flex w-full justify-between pl-3 text-left ${active ? "text-phosphor" : "text-silica/80 hover:text-silica"}`}
+                  className={`flex w-full justify-between pl-3 text-left ${active ? "text-phosphor" : "text-ink-1 hover:text-ink"}`}
                 >
                   <span>{t.label}</span>
                   <span>{t.engine_ms.toFixed(3)}</span>
@@ -120,7 +120,7 @@ function CypherPanel() {
                 ENGINE <span className="text-phosphor">{current.engine_ms.toFixed(4)} ms</span>
               </span>
               <span>
-                WALL <span className="text-silica">{current.wall_ms.toFixed(4)} ms</span>
+                WALL <span className="text-ink">{current.wall_ms.toFixed(4)} ms</span>
               </span>
               <span>ROWS {current.rows}</span>
               {Object.entries(current.stats).map(([k, v]) => (
@@ -155,18 +155,18 @@ type Bar = { label: string; p50: number; detail: string; subject: boolean; timeo
 function BarRow({ bar }: { bar: Bar }) {
   return (
     <div className="group relative flex items-center gap-3 py-[3px]">
-      <span className={`w-44 shrink-0 truncate ${bar.subject ? "text-silica" : "text-muted"}`}>{bar.label}</span>
+      <span className={`w-44 shrink-0 truncate ${bar.subject ? "text-ink" : "text-muted"}`}>{bar.label}</span>
       <div className="relative h-[6px] flex-1">
         <div
           className={`absolute left-0 top-0 h-full rounded-r ${bar.subject ? "bg-phosphor" : bar.timeout ? "bg-crimson/70" : "bg-[#475569]"}`}
           style={{ width: `${xPct(bar.p50)}%` }}
         />
       </div>
-      <span className="w-24 shrink-0 text-right text-silica">
+      <span className="w-24 shrink-0 text-right text-ink">
         {bar.timeout ? "> " : ""}
         {fmtMs(bar.p50)}
       </span>
-      <div className="pointer-events-none absolute left-48 top-full z-10 hidden whitespace-nowrap rounded border border-white/10 bg-void/95 px-2 py-1 text-silica group-hover:block">
+      <div className="pointer-events-none absolute left-48 top-full z-10 hidden whitespace-nowrap rounded border border-white/10 bg-void/95 px-2 py-1 text-ink group-hover:block">
         {bar.detail}
       </div>
     </div>
@@ -257,7 +257,7 @@ function BenchmarkBody({
       <div className="text-[12px] leading-[18px]">
         <span className="text-phosphor">FalkorDB GraphBLAS: {fmtMs(r.falkordb.detour_search.engine_ms.p50)}</span>
         <span className="text-muted"> vs </span>
-        <span className="text-silica">
+        <span className="text-ink">
           SQL Recursive CTE: {sqlDeep.status === "TIMEOUT" ? `> ${sqlDeep.timeout_s * 1000} ms` : fmtMs(sqlDeep.wall_ms.p50)}
         </span>
       </div>
@@ -296,7 +296,7 @@ function BenchmarkBody({
         </thead>
         <tbody>
           {r.sqlite.runs.map((x) => (
-            <tr key={x.max_hops} className="text-silica">
+            <tr key={x.max_hops} className="text-ink">
               <td>{x.max_hops}</td>
               <td className={x.status === "TIMEOUT" ? "text-crimson" : ""}>{x.status}</td>
               <td>{fmtMs(x.wall_ms.p50)}</td>
@@ -334,9 +334,9 @@ export default function CuratorsDrawer() {
       aria-hidden={!open}
     >
       <div className="flex items-center justify-between border-b border-white/[0.06] px-6 py-3">
-        <span className="font-sans text-[14px] font-semibold tracking-[-0.01em] text-silica">Under the hood</span>
+        <span className="font-sans text-[14px] font-semibold tracking-[-0.01em] text-ink">Under the hood</span>
         <span className="text-muted">exact Cypher, parameters and benchmarks. Every figure is measured.</span>
-        <button type="button" className="text-muted hover:text-silica" onClick={() => set({ drawerOpen: false })}>
+        <button type="button" className="text-muted hover:text-ink" onClick={() => set({ drawerOpen: false })}>
           close
         </button>
       </div>

@@ -46,15 +46,33 @@ export default function CablePicker({
   const catalog = useCatalog();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
+  // Open toward the side with room, and size the list to fit: the picker can sit near the bottom of the screen.
+  const [place, setPlace] = useState<{ up: boolean; listMax: number }>({ up: false, listMax: 300 });
   const box = useRef<HTMLDivElement>(null);
+
+  const toggle = () => {
+    if (!open && box.current) {
+      const r = box.current.getBoundingClientRect();
+      const below = window.innerHeight - r.bottom - 24;
+      const above = r.top - 24;
+      const up = below < 360 && above > below;
+      setPlace({ up, listMax: Math.max(160, Math.min(300, (up ? above - 70 : below - 70))) });
+    }
+    setOpen((o) => !o);
+  };
   const selected = catalog.find((c) => c.id === value) ?? null;
 
   useEffect(() => {
     const close = (e: MouseEvent) => {
       if (box.current && !box.current.contains(e.target as Node)) setOpen(false);
     };
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
     document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", esc);
+    };
   }, []);
 
   const list = useMemo(() => {
@@ -72,31 +90,33 @@ export default function CablePicker({
 
   return (
     <div ref={box} className="relative w-[460px]">
-      <div className="font-sans text-[15px] text-silica">{label}</div>
+      <div className="font-sans text-[15px] text-ink">{label}</div>
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggle}
+        aria-expanded={open}
+        aria-haspopup="listbox"
         className={`mt-3 flex w-full items-center justify-between rounded-xl border bg-[#0d1626] px-4 py-3 text-left shadow-[0_10px_30px_rgba(0,0,0,0.45)] transition-colors ${
           open ? "border-white/30" : "border-white/[0.14] hover:border-white/30"
         }`}
       >
         <span className="min-w-0">
-          <span className="block truncate font-sans text-[16px] tracking-tight text-silica">{selected?.name ?? "Choose a cable"}</span>
-          {selected && <span className="block truncate font-sans text-[12px] text-silica/75">{facts(selected)}</span>}
+          <span className="block truncate font-sans text-[16px] tracking-tight text-ink">{selected?.name ?? "Choose a cable"}</span>
+          {selected && <span className="block truncate font-sans text-[12px] text-ink-1">{facts(selected)}</span>}
         </span>
-        <span className="ml-4 shrink-0 font-sans text-[12px] text-silica/75">{catalog.length} cables</span>
+        <span className="ml-4 shrink-0 font-sans text-[12px] text-ink-1">{catalog.length} cables</span>
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-2 w-[520px] overflow-hidden rounded-xl border border-white/[0.1] bg-[#0d1626] shadow-[0_30px_80px_rgba(0,0,0,0.85)]">
+        <div className={`absolute left-0 z-50 w-[520px] overflow-hidden rounded-xl ${place.up ? "bottom-full mb-2" : "top-full mt-2"} border border-white/[0.1] bg-[#0d1626] shadow-[0_30px_80px_rgba(0,0,0,0.85)]`}>
           <input
             autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search cable, owner, country or landing station"
-            className="w-full border-b border-white/[0.1] bg-[#111c30] px-4 py-3 font-sans text-[14px] text-silica placeholder:text-silica/55 focus:outline-none"
+            className="w-full border-b border-white/[0.1] bg-[#111c30] px-4 py-3 font-sans text-[14px] text-ink placeholder:text-ink-3 focus:outline-none"
           />
-          <div className="max-h-[300px] overflow-y-auto py-1">
+          <div className="overflow-y-auto py-1" style={{ maxHeight: place.listMax }}>
             {list.slice(0, 120).map((c) => (
               <button
                 key={c.id}
@@ -109,11 +129,11 @@ export default function CablePicker({
                 className={`block w-full px-4 py-2 text-left transition-colors hover:bg-[#16233a] ${c.id === value ? "bg-[#132036]" : ""}`}
               >
                 <span className="flex items-baseline justify-between gap-3">
-                  <span className="truncate font-sans text-[14px] tracking-tight text-silica">{c.name}</span>
-                  <span className="shrink-0 font-sans text-[12px] tabular-nums text-silica/75">{facts(c)}</span>
+                  <span className="truncate font-sans text-[14px] tracking-tight text-ink">{c.name}</span>
+                  <span className="shrink-0 font-sans text-[12px] tabular-nums text-ink-1">{facts(c)}</span>
                 </span>
                 <span className="flex items-baseline justify-between gap-3">
-                  <span className="truncate font-sans text-[12px] text-silica/70">{c.countries.join(", ")}</span>
+                  <span className="truncate font-sans text-[12px] text-ink-2">{c.countries.join(", ")}</span>
                   {carries(c) ? (
                     <span className="shrink-0 font-sans text-[12px] text-amber-laser/80">{carries(c)}</span>
                   ) : c.isolates.length ? (
@@ -122,9 +142,9 @@ export default function CablePicker({
                 </span>
               </button>
             ))}
-            {!list.length && <div className="px-4 py-3 font-sans text-[13px] text-silica/60">No cable matches.</div>}
+            {!list.length && <div className="px-4 py-3 font-sans text-[13px] text-ink-3">No cable matches.</div>}
             {list.length > 120 && (
-              <div className="px-4 py-2 font-sans text-[12px] text-silica/55">{list.length - 120} more, refine the search</div>
+              <div className="px-4 py-2 font-sans text-[12px] text-ink-3">{list.length - 120} more, refine the search</div>
             )}
           </div>
         </div>
@@ -146,8 +166,8 @@ export function CableCard({ id }: { id: string | null }) {
     <div className="mt-4 w-[460px] space-y-1.5 font-sans text-[13px]">
       {rows.map(([k, v]) => (
         <div key={k} className="grid grid-cols-[96px_1fr] gap-3">
-          <span className="text-silica/70">{k}</span>
-          <span className="truncate text-silica" title={v}>
+          <span className="text-ink-2">{k}</span>
+          <span className="truncate text-ink" title={v}>
             {v}
           </span>
         </div>
