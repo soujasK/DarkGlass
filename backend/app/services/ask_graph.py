@@ -26,7 +26,10 @@ Nodes
 (:CableSystem {id, name, design_capacity_tbps, capacity_model, length_km, ready_for_service, owners,
                scan_risk, scan_rank, scan_isolated_stations, scan_isolated_countries (list),
                scan_gpus_at_risk, scan_latency_delta_ms, scan_capacity_loss_tbps})
-   The scan_* properties come from the planet-wide failure scan (higher scan_risk = more dangerous).
+   ready_for_service is an integer year (e.g. 2020); owners is one comma-separated string.
+   The scan_* properties come from the planet-wide failure scan (higher scan_risk = more dangerous):
+   scan_isolated_stations = landing stations that fall off the subsea network if this cable fails (in
+   scan_isolated_countries); scan_gpus_at_risk = GPUs whose gradient sync would freeze.
 (:TrainingJob {id, name, model_params, gpu_count, sync_interval_ms, max_jitter_ms, priority})
 (:NCCL_Ring {id, ring_index, bucket_size_mb, timeout_threshold_ms})
 (:LogicalTunnel {id, src_dc, dst_dc, src_gateway, dst_gateway, required_bandwidth_gbps, traffic_class,
@@ -70,6 +73,8 @@ openCypher query for FalkorDB. Rules:
 - To find cables at a station use (s:LandingStation)-[:LANDS]->(c:CableSystem). Prefer pure traversals such as
   (s)-[:LANDS]->(c)<-[:CARRIED_BY]-(t)<-[:USES_TUNNEL]-(r)<-[:COORDINATES]-(j) over property joins.
 - Country names are in country_name (e.g. 'United States', 'Ireland').
+- FalkorDB does not support the =~ regex operator. For case-insensitive name matching use
+  toLower(c.name) CONTAINS 'marea'.
 """
 
 
@@ -82,7 +87,25 @@ def _client():
     s = get_settings()
     creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"],
                                    quota_project_id=s.vertex_project_id)
-    return genai.Client(vertexai=True, project=s.vertex_project_id, location=s.vertex_region, credentials=creds)
+    return genai.Client(vertexai=True, project=s.vertex_project_id, location=s.vertex_region, credentials=creds,
+                        http_options={"timeout": int(ATTEMPT_TIMEOUT_S * 1000)})
+
+
+# Vertex latency is long-tailed: most answers take seconds, a few never return. A stuck request is
+# abandoned and asked again, so the question fails with a clear error instead of hanging the UI.
+ATTEMPT_TIMEOUT_S = 45.0
+ATTEMPTS = 3
+
+
+def _generate(client, model: str, contents: str, config: dict):
+    for attempt in range(1, ATTEMPTS + 1):
+        try:
+            return client.models.generate_content(model=model, contents=contents, config=config)
+        except Exception as exc:
+            if "timeout" not in f"{type(exc).__name__} {exc}".lower():
+                raise
+            if attempt == ATTEMPTS:
+                raise RuntimeError(f"{model} did not answer in {ATTEMPTS} tries of {ATTEMPT_TIMEOUT_S:.0f} s") from exc
 
 
 def _clean(cypher: str) -> str:
@@ -111,11 +134,8 @@ def ask(question: str) -> dict[str, Any]:
     s = get_settings()
     t0 = time.perf_counter()
     client = _client()
-    response = client.models.generate_content(
-        model=s.gemini_model,
-        contents=f"{SCHEMA}\n\nQuestion: {question}",
-        config={"system_instruction": INSTRUCTIONS, "thinking_config": {"thinking_level": "low"}},
-    )
+    response = _generate(client, s.gemini_model, f"{SCHEMA}\n\nQuestion: {question}",
+                         {"system_instruction": INSTRUCTIONS, "thinking_config": {"thinking_level": "low"}})
     llm_ms = (time.perf_counter() - t0) * 1000
     cypher = _clean(response.text or "")
     try:
