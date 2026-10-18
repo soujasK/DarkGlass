@@ -32,6 +32,8 @@ export function useCatalog() {
 }
 
 /** Searchable dropdown of every subsea cable, with metadata. */
+const FOOTER_PX = 100;
+
 export default function CablePicker({
   value,
   onChange,
@@ -53,7 +55,7 @@ export default function CablePicker({
   const toggle = () => {
     if (!open && box.current) {
       const r = box.current.getBoundingClientRect();
-      const below = window.innerHeight - r.bottom - 24;
+      const below = window.innerHeight - r.bottom - FOOTER_PX; // the engine bar owns the bottom of the screen
       const above = r.top - 24;
       const up = below < 360 && above > below;
       setPlace({ up, listMax: Math.max(160, Math.min(300, (up ? above - 70 : below - 70))) });
