@@ -3,7 +3,7 @@
 **Self-healing networks for AI supercomputers, running on FalkorDB.**
 WeMakeDevs x FalkorDB Graph Hacks, Track 01: Agents That Act on Connected Data.
 
-**▶ [Demo video (3 min)](https://youtu.be/-fh9tKQJ4Z8)** · **[Blog: 419 milliseconds](https://darkglass-blog.onrender.com)** ([also on dev.to](https://dev.to/soujas_k_1ab6dcabf6a196f3/419-milliseconds-how-a-graph-saved-65536-gpus-from-a-ships-anchor-2g4g)) · **[Run it locally](#run-it)**
+**🌐 [Live demo](https://8-234-112-123.sslip.io)** · **▶ [Demo video (3 min)](https://youtu.be/-fh9tKQJ4Z8)** · **[Blog: 419 milliseconds](https://darkglass-blog.onrender.com)** ([also on dev.to](https://dev.to/soujas_k_1ab6dcabf6a196f3/419-milliseconds-how-a-graph-saved-65536-gpus-from-a-ships-anchor-2g4g)) · **[Run it locally](#run-it)**
 
 ![Training restored](docs/screenshots/3-restored.png)
 
@@ -274,6 +274,20 @@ The tests cover:
 - FalkorDB's algorithms against NetworkX on the same edges (`tests/test_algorithms.py`): exact
   betweenness has the same top 10 stations, the agent's 32-source sample finds the same #1 and at
   least 8 of the top 10, and `algo.SPpaths` latency equals Dijkstra's
+
+**Deploy it (public demo).** `deploy/` runs the whole stack on one server: FalkorDB, the API, the web
+app and Caddy, which gets the HTTPS certificate by itself. Only ports 80 and 443 are open; FalkorDB and its
+Browser stay private. Gemini is switched off (`DARKGLASS_LLM_ENABLED=false`), so visitors cannot spend the
+model budget: the agent defaults to Playbook, which runs the same FalkorDB tools, and Ask the graph explains
+why it is off. An incident left alone for 10 minutes resets, so each visitor starts clean.
+
+```bash
+DOMAIN=your.host.name docker compose -f deploy/docker-compose.yml up -d --build
+```
+
+The live demo runs on a Google Compute Engine e2-medium (2 vCPU, 4 GB) with `deploy/gce-startup.sh` as its
+startup script, which installs Docker, fetches this repo and uses `<external-ip>.sslip.io` as a free HTTPS
+hostname. On that machine the full 603-cable planet scan takes about 3 to 5 minutes.
 
 **Manual setup** (what the scripts do): `docker compose up -d`; then in `backend/`:
 `python -m venv .venv`, activate it, `pip install -r requirements.txt`,
