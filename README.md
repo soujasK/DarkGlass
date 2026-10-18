@@ -118,7 +118,7 @@ The SQL time grows exponentially with path length. At 4, 6, 8, 10 and 12 hops it
 One caveat: the 0.8 ms figure is the search alone. The full detour tool, including masking and
 restoring about 1,200 low-capacity links, takes about 50 ms.
 
-Planet scan: 603 failures in 15 to 45 s on the development machine, depending on load. Each scan
+Planet scan: 603 failures in 15 to 50 s on the development machine, depending on load. Each scan
 runs roughly 600 WCC calls, 300 max-flow runs, 1,800 mutations and 3,000 index lookups.
 
 ### Ask the graph: eval

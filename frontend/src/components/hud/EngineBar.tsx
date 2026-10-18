@@ -39,7 +39,7 @@ export default function EngineBar() {
         type="button"
         onClick={() => set({ drawerOpen: true })}
         className="mb-[clamp(8px,1.6vh,16px)] flex items-baseline gap-3 font-sans text-[13px] text-silica/50 transition-colors hover:text-silica"
-        title="Every Cypher query FalkorDB has run since the backend started. Each number below counts one kind of FalkorDB work. Click to see the queries."
+        title="Every query DarkGlass has run for cuts, agent tools, the scan, the proof and Ask since the backend started (the screen's own refresh queries are not counted). Each number below counts one kind of FalkorDB work. Click to see the queries."
       >
         <span className="font-medium text-silica">FalkorDB</span>
         <span className="tabular-nums">

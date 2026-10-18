@@ -38,6 +38,10 @@ def get_db() -> FalkorDB:
                     max_connections=s.falkordb_pool_size,
                     timeout=10,
                     decode_responses=True,
+                    # redis-py 8 defaults to a 5 s socket timeout, which abandoned planet-scan queries under
+                    # load. FalkorDB itself bounds queries (TIMEOUT_MAX 120 s in docker-compose).
+                    socket_timeout=130,
+                    socket_connect_timeout=5,
                 )
                 _db = FalkorDB(connection_pool=pool)
     return _db
