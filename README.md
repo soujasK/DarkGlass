@@ -257,6 +257,11 @@ These behaviours were found by testing against FalkorDB 4.22.
 | **Measured** | Span lengths along the real route polylines; latency = length x 4.897 us/km |
 | **Modelled** | The compute fabric (H100 servers, ConnectX-7 NICs, Clos switches, racks, halls), capacity (published figures for Dunant and MAREA, an era model for the rest), utilisation, overland backhaul, risk groups, the AI jobs, the $18,420/hr cost, the 3-minute manual-reroute comparison, and ROADM commands |
 
+The training jobs are illustrative. "Llama-4 400B MoE pretrain" borrows the publicly documented size
+of Meta's Llama 4 Maverick (about 400B parameters, Mixture-of-Experts) to give the scenario a realistic
+scale; it is not a real Meta workload and has no connection to Meta. The agent uses only each job's
+numbers (GPU count, sync interval, jitter budget, priority), never its name.
+
 TeleGeography data is CC BY-NC-SA 3.0. Attribute it, and do not use it commercially.
 
 ## Layout
