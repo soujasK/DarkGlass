@@ -77,3 +77,17 @@ def test_llm_switch_for_a_public_demo():
     assert not Settings(llm_enabled=False, vertex_project_id="p").llm_available  # demo: Gemini off
     assert not Settings(llm_provider="gemini", vertex_project_id=None).llm_available  # no project, no Gemini
     assert Settings(llm_provider="gemini", vertex_project_id="p").llm_available
+
+
+def test_hourly_cap_site_and_visitor_limits(monkeypatch):
+    from app.core import limits
+
+    cap = limits.HourlyCap(site_per_hour=3, visitor_per_hour=2)
+    assert cap.take("a") is None and cap.take("a") is None
+    assert cap.take("a") == "visitor"          # a's two runs are used
+    assert cap.take("b") is None               # the site still has room
+    assert cap.take("c") == "site"             # three runs this hour in total
+    now = limits.time.time()
+    monkeypatch.setattr(limits.time, "time", lambda: now + limits.WINDOW_S + 1)
+    assert cap.take("a") is None               # an hour later the window has moved on
+    assert limits.HourlyCap(0, 0).take("x") is None  # 0 = no limit (local runs)

@@ -54,6 +54,12 @@ class Settings(BaseSettings):
     llm_enabled: bool = True
     # A public demo returns to the start screen when an incident is left alone this long (0 = never).
     idle_reset_minutes: float = 0
+    # Hourly caps on Gemini for a public demo, for the whole site and per visitor (0 = no limit).
+    # Over the agent cap, a fix runs the Playbook instead; over the Ask cap, Ask says to try later.
+    agent_hourly_limit: int = 0
+    agent_visitor_hourly_limit: int = 0
+    ask_hourly_limit: int = 0
+    ask_visitor_hourly_limit: int = 0
 
     @property
     def llm_available(self) -> bool:

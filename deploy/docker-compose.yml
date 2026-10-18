@@ -1,6 +1,6 @@
 # DarkGlass public demo: FalkorDB, the API, the web app and Caddy (automatic HTTPS) on one machine.
 #   DOMAIN=demo.example.com docker compose -f deploy/docker-compose.yml up -d --build
-# Gemini is off (visitors cannot spend the model budget); the Playbook agent runs the same FalkorDB tools.
+# Gemini is off unless LLM_ENABLED=true, and then capped per hour; the Playbook runs the same FalkorDB tools.
 # Only Caddy is reachable from outside; FalkorDB and its Browser stay on the internal network.
 name: darkglass
 
@@ -29,7 +29,15 @@ services:
     environment:
       DARKGLASS_FALKORDB_HOST: falkordb
       DARKGLASS_FALKORDB_PORT: "6379"
-      DARKGLASS_LLM_ENABLED: "false"
+      # Gemini runs only when LLM_ENABLED=true and VERTEX_PROJECT_ID is set (gce-startup.sh does both from the
+      # instance metadata); it signs in as the machine's own service account, so no key is stored.
+      DARKGLASS_LLM_ENABLED: ${LLM_ENABLED:-false}
+      DARKGLASS_VERTEX_PROJECT_ID: ${VERTEX_PROJECT_ID:-}
+      # Hourly Gemini budget: whole site / per visitor. Over it, a fix falls back to the Playbook.
+      DARKGLASS_AGENT_HOURLY_LIMIT: "30"
+      DARKGLASS_AGENT_VISITOR_HOURLY_LIMIT: "5"
+      DARKGLASS_ASK_HOURLY_LIMIT: "60"
+      DARKGLASS_ASK_VISITOR_HOURLY_LIMIT: "10"
       DARKGLASS_IDLE_RESET_MINUTES: "10"
 
   frontend:

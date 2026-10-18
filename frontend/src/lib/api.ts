@@ -29,7 +29,7 @@ export const api = {
   anchorDrag: (cable_id = "dunant") =>
     request<Snapshot>("/api/chaos/anchor-drag", { method: "POST", body: JSON.stringify({ cable_id }) }),
   runAgent: (mode: "playbook" | "llm") =>
-    request<Snapshot | { accepted: true }>("/api/agent/run", { method: "POST", body: JSON.stringify({ mode }) }),
+    request<(Snapshot & { notice?: string }) | { accepted: true }>("/api/agent/run", { method: "POST", body: JSON.stringify({ mode }) }),
   runScan: () => request<{ accepted: boolean }>("/api/scan/run", { method: "POST" }),
   latestScan: () => request<{ summary: import("@/store/useMeshStore").ScanSummary | null }>("/api/scan/latest"),
   ask: (question: string) =>

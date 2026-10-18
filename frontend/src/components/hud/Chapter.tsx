@@ -268,9 +268,10 @@ export default function Chapter() {
   const fix = () =>
     guard(async () => {
       // Switch to the reasoning view immediately; the run's own events then fill it in.
-      st.set({ agentRunning: true, steps: [], agentResult: null });
+      st.set({ agentRunning: true, steps: [], agentResult: null, info: null });
       try {
         const res = await api.runAgent(st.agentMode);
+        if ("notice" in res && res.notice) st.set({ info: res.notice });
         if ("server_time" in res) st.setSnapshot(res as Snapshot);
       } catch (e) {
         st.set({ agentRunning: false });
@@ -476,6 +477,7 @@ export default function Chapter() {
         {body}
       </div>
       {st.notice && <div className="mt-4 font-mono text-[11px] text-crimson">{st.notice}</div>}
+      {st.info && <div className="mt-4 max-w-[480px] font-sans text-[13px] text-ink-3">{st.info}</div>}
     </div>
   );
 }

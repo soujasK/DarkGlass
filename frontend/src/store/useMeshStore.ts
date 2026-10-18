@@ -132,6 +132,8 @@ type MeshState = {
   benchmarkRunning: boolean;
   proof: ProofState;
   notice: string | null;
+  /** A calm note about the last run, e.g. that the Playbook stood in for Gemini on a public demo. */
+  info: string | null;
 
   set: (partial: Partial<MeshState>) => void;
   setSnapshot: (s: Snapshot) => void;
@@ -178,6 +180,7 @@ export const useMeshStore = create<MeshState>((set, get) => ({
   benchmarkRunning: false,
   proof: { running: false, stage: null, cableId: null, report: null, error: null },
   notice: null,
+  info: null,
 
   set: (partial) => set(partial),
 
@@ -213,6 +216,7 @@ export const useMeshStore = create<MeshState>((set, get) => ({
 
   clearRun: () =>
     set({
+      info: null,
       queue: [],
       steps: [],
       agentRunning: false,

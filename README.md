@@ -252,7 +252,7 @@ works except Ask the graph.
 
 ```bash
 cd backend
-pytest -q              # 129 unit, scenario, algorithm and end-to-end tests, about 3 minutes
+pytest -q              # 132 unit, scenario, algorithm and end-to-end tests, about 3 minutes
 pytest -q -m slow      # also the full 603-cable planet scan
 ```
 
@@ -277,17 +277,19 @@ The tests cover:
 
 **Deploy it (public demo).** `deploy/` runs the whole stack on one server: FalkorDB, the API, the web
 app and Caddy, which gets the HTTPS certificate by itself. Only ports 80 and 443 are open; FalkorDB and its
-Browser stay private. Gemini is switched off (`DARKGLASS_LLM_ENABLED=false`), so visitors cannot spend the
-model budget: the agent defaults to Playbook, which runs the same FalkorDB tools, and Ask the graph explains
-why it is off. An incident left alone for 10 minutes resets, so each visitor starts clean.
+Browser stay private. Gemini runs on a capped budget: 30 agent runs and 60 questions an hour for the whole
+site, 5 and 10 per visitor. Past the cap, a fix runs the Playbook, which uses the same FalkorDB tools, and says
+so; Ask asks you to try later. Gemini signs in as the machine's own service account, so no key is stored, and
+`LLM_ENABLED=false` turns it off entirely. An incident left alone for 10 minutes resets, so each visitor starts
+clean.
 
 ```bash
 DOMAIN=your.host.name docker compose -f deploy/docker-compose.yml up -d --build
 ```
 
 The live demo runs on a Google Compute Engine e2-medium (2 vCPU, 4 GB) with `deploy/gce-startup.sh` as its
-startup script, which installs Docker, fetches this repo and uses `<external-ip>.sslip.io` as a free HTTPS
-hostname. On that machine the full 603-cable planet scan takes about 3 to 5 minutes.
+startup script, which installs Docker, fetches this repo, uses `<external-ip>.sslip.io` as a free HTTPS
+hostname, and turns Gemini on when the instance metadata has `llm=true`. On that machine the full 603-cable planet scan takes about 3 to 5 minutes.
 
 **Manual setup** (what the scripts do): `docker compose up -d`; then in `backend/`:
 `python -m venv .venv`, activate it, `pip install -r requirements.txt`,

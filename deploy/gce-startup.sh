@@ -27,6 +27,13 @@ if [ -z "$DOMAIN" ]; then
 fi
 echo "domain: $DOMAIN"
 
+# Gemini: on only when the instance metadata says llm=true. It then uses this project's Vertex AI through the
+# machine's service account (needs the cloud-platform scope and the Vertex AI User role); no key is stored.
+LLM_ENABLED=$(meta instance/attributes/llm); LLM_ENABLED=${LLM_ENABLED:-false}
+VERTEX_PROJECT_ID=""
+if [ "$LLM_ENABLED" = "true" ]; then VERTEX_PROJECT_ID=$(meta project/project-id); fi
+echo "gemini: $LLM_ENABLED"
+
 cd "$DIR"
-DOMAIN="$DOMAIN" docker compose -f deploy/docker-compose.yml up -d --build
+DOMAIN="$DOMAIN" LLM_ENABLED="$LLM_ENABLED" VERTEX_PROJECT_ID="$VERTEX_PROJECT_ID" docker compose -f deploy/docker-compose.yml up -d --build
 echo "== $(date -Is) DarkGlass is starting at https://$DOMAIN"
