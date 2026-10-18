@@ -12,7 +12,7 @@
 
 **[Live demo](https://8-234-112-123.sslip.io)** &nbsp;·&nbsp;
 **[3-minute video](https://youtu.be/-fh9tKQJ4Z8)** &nbsp;·&nbsp;
-**[Blog: 419 milliseconds](https://darkglass-blog.onrender.com)** &nbsp;·&nbsp;
+**[Blog: 419 milliseconds](https://blog.8-234-112-123.sslip.io)** &nbsp;·&nbsp;
 **[Run it in one command](#run-it)**
 
 </div>
